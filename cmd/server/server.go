@@ -26,6 +26,7 @@ func main() {
 	cfg := config.LoadConfig()
 	if cfg == nil {
 		log.Fatal("failed to load configuration")
+		return
 	}
 
 	logger.InitLogger(cfg.Production)
@@ -33,6 +34,7 @@ func main() {
 	conn, err := db.Connect(cfg.DatabaseURL)
 	if err != nil {
 		logger.Log.Error("failed to connect to database", zap.Error(err))
+		return
 	}
 	defer db.Close(conn)
 
