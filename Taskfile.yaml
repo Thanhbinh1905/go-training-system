@@ -1,0 +1,53 @@
+version: '3'
+
+dotenv: ['.env']
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  initdb:
+    desc: Run PostgreSQL container with env vars
+    cmds:
+      - docker run --name seta-training \
+          -e POSTGRES_PASSWORD={{.POSTGRES_PASSWORD}} \
+          -e POSTGRES_USER={{.POSTGRES_USER}} \
+          -p {{.POSTGRES_PORT}}:5432 \
+          -d postgres:13.21-alpine3.21
+
+  createdb:
+    desc: Create a new PostgreSQL database inside the running container
+    cmds:
+      - docker exec -it seta-training createdb --username={{.POSTGRES_USER}} --owner={{.POSTGRES_USER}} {{.POSTGRES_DB}}
+
+  dropdb:
+    desc: Drop the PostgreSQL database if it exists
+    cmds:
+      - docker exec -it seta-training dropdb --username={{.POSTGRES_USER}} --if-exists {{.POSTGRES_DB}}
+
+  resetdb:
+    desc: Reset the PostgreSQL database by dropping and recreating it
+    cmds:
+      - task dropdb
+      - task createdb
+
+  dump-schema:
+    desc: Dump the schema of the PostgreSQL database to a file
+    cmds:
+      - docker exec -t seta-training pg_dump -U {{.POSTGRES_USER}} -d {{.POSTGRES_DB}} --schema-only > internal/db/schema_dump.sql
+
+  migrate:
+    desc: Run database migrations
+    cmds:
+      - go run cmd/migrate/main.go
+
+  gqlgen:
+    desc: Generate GraphQL server code using gqlgen
+    cmds:
+      - gqlgen generate
+
+  server:
+    cmds:
+      - go run cmd/server/server.go

@@ -1,0 +1,95 @@
+scalar DateTime
+
+enum UserType {
+  MANAGER
+  MEMBER
+}
+
+interface MutationResponse {
+  code: String!
+  success: Boolean!
+  message: String
+  errors: [String]
+}
+
+input UserInput {
+  email: String!
+  password: String!
+}
+
+input CreateUserInput {
+  username: String!
+  email: String!
+  password: String!
+  role: UserType!
+}
+
+input UpdateUserInput {
+  username: String
+  email: String
+  role: UserType
+}
+
+type User {
+  userId: ID!
+  username: String!
+  email: String!
+  role: UserType!
+  createdAt: DateTime
+}
+
+type Manager {
+  userId: ID!
+  username: String!
+  email: String!
+}
+
+type Member {
+  userId: ID!
+  username: String!
+  email: String!
+}
+
+type Team {
+  teamId: ID!
+  teamName: String!
+  managers: [Manager!]!
+  members: [Member]
+  totalManagers: Int!
+  totalMembers: Int
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+type UserMutationResponse implements MutationResponse {
+  code: String!
+  success: Boolean!
+  message: String
+  errors: [String]
+  user: User
+}
+
+type AuthMutationResponse implements MutationResponse {
+  code: String!
+  success: Boolean!
+  message: String!
+  errors: [String]
+  accessToken: String
+  refreshToken: String
+  user: User
+}
+
+type Query {
+  users(role: UserType): [User!]!
+  user(userId: ID): User
+  teams: [Team!]!
+  team(teamId: ID!): Team
+  myTeams: [Team!]!
+}
+
+type Mutation {
+  createUser(input: CreateUserInput!): UserMutationResponse!
+  updateUser(userId: ID!, input: UpdateUserInput!): UserMutationResponse!
+  login(input: UserInput!): AuthMutationResponse!
+  logout: Boolean!
+}
