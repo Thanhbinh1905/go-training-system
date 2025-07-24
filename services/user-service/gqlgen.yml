@@ -19,7 +19,7 @@ exec:
 
 # Uncomment to enable federation
 # federation:
-#   filename: internal/graph/federation.go
+#   filename: graph/federation.go
 #   package: graph
 #   version: 2
 #   options:
@@ -27,7 +27,7 @@ exec:
 
 # Where should any generated models go?
 model:
-  filename: internal/graph/model/models_gen.go
+  filename: internal/model/models_gen.go
   package: model
 
   # Optional: Pass in a path to a new gotpl template to use for generating the models
@@ -39,7 +39,7 @@ resolver:
   layout: follow-schema # Only other option is "single-file."
 
   # Only for single-file layout:
-  # filename: internal/graph/resolver.go
+  # filename: graph/resolver.go
 
   # Only for follow-schema layout:
   dir: internal/graph
@@ -121,7 +121,7 @@ call_argument_directives_with_null: true
 # gqlgen will search for any type names in the schema in these go packages
 # if they match it will use them, otherwise it will generate them.
 autobind:
-#  - "github.com/Thanhbinh1905/go-training-system/internal/graph/model"
+#  - "github.com/Thanhbinh1905/go-training-system/services/user-service/graph/model"
 
 # This section declares type mapping between the GraphQL and go type systems
 #

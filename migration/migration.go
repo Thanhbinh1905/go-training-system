@@ -1,7 +1,7 @@
 package migration
 
 import (
-	"github.com/Thanhbinh1905/go-training-system/internal/model"
+	"github.com/Thanhbinh1905/go-training-system/migration/model"
 	"gorm.io/gorm"
 )
 

@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/Thanhbinh1905/go-training-system/internal/config"
-	"github.com/Thanhbinh1905/go-training-system/internal/migration"
+	"github.com/Thanhbinh1905/go-training-system/migration"
 	"github.com/Thanhbinh1905/go-training-system/pkg/db"
 	"github.com/Thanhbinh1905/go-training-system/pkg/logger"
 	"go.uber.org/zap"

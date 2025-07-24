@@ -1,0 +1,114 @@
+scalar DateTime
+scalar UUID
+
+enum UserType {
+  MANAGER
+  MEMBER
+}
+
+interface MutationResponse {
+  code: String!
+  success: Boolean!
+  message: String
+  errors: [String]
+}
+
+# ===== INPUTS =====
+input UserInput {
+  email: String!
+  password: String!
+}
+
+input CreateUserInput {
+  username: String!
+  email: String!
+  password: String!
+  role: UserType!
+}
+
+input UpdateUserInput {
+  username: String
+  email: String
+  role: UserType
+}
+
+input TokenInput {
+  token: String!
+}
+
+# 👇 Add for pagination
+input UserPaginationInput {
+  limit: Int = 10
+  offset: Int = 0
+  role: UserType
+}
+
+# ===== TYPES =====
+type User {
+  id: UUID!
+  username: String!
+  email: String!
+  role: UserType!
+  createdAt: DateTime
+}
+
+type PaginatedUsers {
+  users: [User!]!
+  total: Int!
+  limit: Int!
+  offset: Int!
+}
+
+type Team {
+  teamId: UUID!
+  teamName: String!
+  managers: [User!]!
+  members: [User!]!
+  totalManagers: Int!
+  totalMembers: Int!
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+# ===== RESPONSES =====
+type UserMutationResponse implements MutationResponse {
+  code: String!
+  success: Boolean!
+  message: String
+  errors: [String]
+  user: User
+}
+
+type AuthMutationResponse implements MutationResponse {
+  code: String!
+  success: Boolean!
+  message: String!
+  errors: [String]
+  accessToken: String
+  refreshToken: String
+  user: User
+}
+
+type TokenValidationResponse {
+  valid: Boolean!
+  user: User
+}
+
+# ===== QUERIES =====
+type Query {
+  users(pagination: UserPaginationInput): PaginatedUsers!
+  user(id: UUID!): User
+  verifyToken(input: TokenInput!): TokenValidationResponse!
+
+  teams: [Team!]!
+  team(teamId: UUID!): Team
+  myTeams: [Team!]!
+}
+
+# ===== MUTATIONS =====
+type Mutation {
+  createUser(input: CreateUserInput!): UserMutationResponse!
+  updateUser(id: UUID!, input: UpdateUserInput!): UserMutationResponse!
+  login(input: UserInput!): AuthMutationResponse!
+  logout: Boolean!
+}
