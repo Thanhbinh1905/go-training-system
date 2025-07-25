@@ -27,7 +27,7 @@ exec:
 
 # Where should any generated models go?
 model:
-  filename: internal/model/models_gen.go
+  filename: internal/graph/model/models_gen.go
   package: model
 
   # Optional: Pass in a path to a new gotpl template to use for generating the models

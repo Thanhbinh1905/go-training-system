@@ -14,7 +14,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/model"
+	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/graph/model"
 	"github.com/google/uuid"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -103,6 +103,11 @@ type ComplexityRoot struct {
 		ID        func(childComplexity int) int
 		Role      func(childComplexity int) int
 		Username  func(childComplexity int) int
+	}
+
+	UserClaims struct {
+		ID   func(childComplexity int) int
+		Role func(childComplexity int) int
 	}
 
 	UserMutationResponse struct {
@@ -435,6 +440,20 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.User.Username(childComplexity), true
 
+	case "UserClaims.id":
+		if e.complexity.UserClaims.ID == nil {
+			break
+		}
+
+		return e.complexity.UserClaims.ID(childComplexity), true
+
+	case "UserClaims.role":
+		if e.complexity.UserClaims.Role == nil {
+			break
+		}
+
+		return e.complexity.UserClaims.Role(childComplexity), true
+
 	case "UserMutationResponse.code":
 		if e.complexity.UserMutationResponse.Code == nil {
 			break
@@ -615,7 +634,7 @@ func (ec *executionContext) field_Mutation_createUser_argsInput(
 ) (model.CreateUserInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNCreateUserInput2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐCreateUserInput(ctx, tmp)
+		return ec.unmarshalNCreateUserInput2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐCreateUserInput(ctx, tmp)
 	}
 
 	var zeroVal model.CreateUserInput
@@ -638,7 +657,7 @@ func (ec *executionContext) field_Mutation_login_argsInput(
 ) (model.UserInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNUserInput2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUserInput(ctx, tmp)
+		return ec.unmarshalNUserInput2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUserInput(ctx, tmp)
 	}
 
 	var zeroVal model.UserInput
@@ -679,7 +698,7 @@ func (ec *executionContext) field_Mutation_updateUser_argsInput(
 ) (model.UpdateUserInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNUpdateUserInput2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUpdateUserInput(ctx, tmp)
+		return ec.unmarshalNUpdateUserInput2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUpdateUserInput(ctx, tmp)
 	}
 
 	var zeroVal model.UpdateUserInput
@@ -771,7 +790,7 @@ func (ec *executionContext) field_Query_users_argsPagination(
 ) (*model.UserPaginationInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
 	if tmp, ok := rawArgs["pagination"]; ok {
-		return ec.unmarshalOUserPaginationInput2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUserPaginationInput(ctx, tmp)
+		return ec.unmarshalOUserPaginationInput2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUserPaginationInput(ctx, tmp)
 	}
 
 	var zeroVal *model.UserPaginationInput
@@ -794,7 +813,7 @@ func (ec *executionContext) field_Query_verifyToken_argsInput(
 ) (model.TokenInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNTokenInput2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐTokenInput(ctx, tmp)
+		return ec.unmarshalNTokenInput2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐTokenInput(ctx, tmp)
 	}
 
 	var zeroVal model.TokenInput
@@ -1181,7 +1200,7 @@ func (ec *executionContext) _AuthMutationResponse_user(ctx context.Context, fiel
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AuthMutationResponse_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1237,7 +1256,7 @@ func (ec *executionContext) _Mutation_createUser(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.UserMutationResponse)
 	fc.Result = res
-	return ec.marshalNUserMutationResponse2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUserMutationResponse(ctx, field.Selections, res)
+	return ec.marshalNUserMutationResponse2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUserMutationResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1304,7 +1323,7 @@ func (ec *executionContext) _Mutation_updateUser(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.UserMutationResponse)
 	fc.Result = res
-	return ec.marshalNUserMutationResponse2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUserMutationResponse(ctx, field.Selections, res)
+	return ec.marshalNUserMutationResponse2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUserMutationResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1371,7 +1390,7 @@ func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*model.AuthMutationResponse)
 	fc.Result = res
-	return ec.marshalNAuthMutationResponse2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐAuthMutationResponse(ctx, field.Selections, res)
+	return ec.marshalNAuthMutationResponse2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐAuthMutationResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_login(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1486,7 +1505,7 @@ func (ec *executionContext) _PaginatedUsers_users(ctx context.Context, field gra
 	}
 	res := resTmp.([]*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUserᚄ(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUserᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PaginatedUsers_users(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1674,7 +1693,7 @@ func (ec *executionContext) _Query_users(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(*model.PaginatedUsers)
 	fc.Result = res
-	return ec.marshalNPaginatedUsers2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐPaginatedUsers(ctx, field.Selections, res)
+	return ec.marshalNPaginatedUsers2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐPaginatedUsers(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_users(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1736,7 +1755,7 @@ func (ec *executionContext) _Query_user(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1803,7 +1822,7 @@ func (ec *executionContext) _Query_verifyToken(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model.TokenValidationResponse)
 	fc.Result = res
-	return ec.marshalNTokenValidationResponse2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐTokenValidationResponse(ctx, field.Selections, res)
+	return ec.marshalNTokenValidationResponse2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐTokenValidationResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_verifyToken(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1864,7 +1883,7 @@ func (ec *executionContext) _Query_teams(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.([]*model.Team)
 	fc.Result = res
-	return ec.marshalNTeam2ᚕᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐTeamᚄ(ctx, field.Selections, res)
+	return ec.marshalNTeam2ᚕᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐTeamᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_teams(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1923,7 +1942,7 @@ func (ec *executionContext) _Query_team(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(*model.Team)
 	fc.Result = res
-	return ec.marshalOTeam2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐTeam(ctx, field.Selections, res)
+	return ec.marshalOTeam2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐTeam(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_team(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1996,7 +2015,7 @@ func (ec *executionContext) _Query_myTeams(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.([]*model.Team)
 	fc.Result = res
-	return ec.marshalNTeam2ᚕᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐTeamᚄ(ctx, field.Selections, res)
+	return ec.marshalNTeam2ᚕᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐTeamᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_myTeams(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2277,7 +2296,7 @@ func (ec *executionContext) _Team_managers(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.([]*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUserᚄ(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUserᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Team_managers(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2333,7 +2352,7 @@ func (ec *executionContext) _Team_members(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.([]*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUserᚄ(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUserᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Team_members(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2598,9 +2617,9 @@ func (ec *executionContext) _TokenValidationResponse_user(ctx context.Context, f
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*model.UserClaims)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUserClaims2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUserClaims(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TokenValidationResponse_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2612,17 +2631,11 @@ func (ec *executionContext) fieldContext_TokenValidationResponse_user(_ context.
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "username":
-				return ec.fieldContext_User_username(ctx, field)
-			case "email":
-				return ec.fieldContext_User_email(ctx, field)
+				return ec.fieldContext_UserClaims_id(ctx, field)
 			case "role":
-				return ec.fieldContext_User_role(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_User_createdAt(ctx, field)
+				return ec.fieldContext_UserClaims_role(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type UserClaims", field.Name)
 		},
 	}
 	return fc, nil
@@ -2788,7 +2801,7 @@ func (ec *executionContext) _User_role(ctx context.Context, field graphql.Collec
 	}
 	res := resTmp.(model.UserType)
 	fc.Result = res
-	return ec.marshalNUserType2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUserType(ctx, field.Selections, res)
+	return ec.marshalNUserType2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUserType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2840,6 +2853,94 @@ func (ec *executionContext) fieldContext_User_createdAt(_ context.Context, field
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserClaims_id(ctx context.Context, field graphql.CollectedField, obj *model.UserClaims) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserClaims_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(uuid.UUID)
+	fc.Result = res
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserClaims_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserClaims",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UUID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserClaims_role(ctx context.Context, field graphql.CollectedField, obj *model.UserClaims) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserClaims_role(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Role, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.UserType)
+	fc.Result = res
+	return ec.marshalNUserType2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUserType(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserClaims_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserClaims",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UserType does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3040,7 +3141,7 @@ func (ec *executionContext) _UserMutationResponse_user(ctx context.Context, fiel
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UserMutationResponse_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5056,7 +5157,7 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 			it.Password = data
 		case "role":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
-			data, err := ec.unmarshalNUserType2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUserType(ctx, v)
+			data, err := ec.unmarshalNUserType2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUserType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5124,7 +5225,7 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 			it.Email = data
 		case "role":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
-			data, err := ec.unmarshalOUserType2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUserType(ctx, v)
+			data, err := ec.unmarshalOUserType2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUserType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5206,7 +5307,7 @@ func (ec *executionContext) unmarshalInputUserPaginationInput(ctx context.Contex
 			it.Offset = data
 		case "role":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
-			data, err := ec.unmarshalOUserType2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUserType(ctx, v)
+			data, err := ec.unmarshalOUserType2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUserType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5770,6 +5871,50 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 	return out
 }
 
+var userClaimsImplementors = []string{"UserClaims"}
+
+func (ec *executionContext) _UserClaims(ctx context.Context, sel ast.SelectionSet, obj *model.UserClaims) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, userClaimsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UserClaims")
+		case "id":
+			out.Values[i] = ec._UserClaims_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "role":
+			out.Values[i] = ec._UserClaims_role(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var userMutationResponseImplementors = []string{"UserMutationResponse", "MutationResponse"}
 
 func (ec *executionContext) _UserMutationResponse(ctx context.Context, sel ast.SelectionSet, obj *model.UserMutationResponse) graphql.Marshaler {
@@ -6155,11 +6300,11 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNAuthMutationResponse2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐAuthMutationResponse(ctx context.Context, sel ast.SelectionSet, v model.AuthMutationResponse) graphql.Marshaler {
+func (ec *executionContext) marshalNAuthMutationResponse2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐAuthMutationResponse(ctx context.Context, sel ast.SelectionSet, v model.AuthMutationResponse) graphql.Marshaler {
 	return ec._AuthMutationResponse(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNAuthMutationResponse2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐAuthMutationResponse(ctx context.Context, sel ast.SelectionSet, v *model.AuthMutationResponse) graphql.Marshaler {
+func (ec *executionContext) marshalNAuthMutationResponse2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐAuthMutationResponse(ctx context.Context, sel ast.SelectionSet, v *model.AuthMutationResponse) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -6185,7 +6330,7 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalNCreateUserInput2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐCreateUserInput(ctx context.Context, v any) (model.CreateUserInput, error) {
+func (ec *executionContext) unmarshalNCreateUserInput2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐCreateUserInput(ctx context.Context, v any) (model.CreateUserInput, error) {
 	res, err := ec.unmarshalInputCreateUserInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -6206,11 +6351,11 @@ func (ec *executionContext) marshalNInt2int32(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) marshalNPaginatedUsers2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐPaginatedUsers(ctx context.Context, sel ast.SelectionSet, v model.PaginatedUsers) graphql.Marshaler {
+func (ec *executionContext) marshalNPaginatedUsers2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐPaginatedUsers(ctx context.Context, sel ast.SelectionSet, v model.PaginatedUsers) graphql.Marshaler {
 	return ec._PaginatedUsers(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPaginatedUsers2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐPaginatedUsers(ctx context.Context, sel ast.SelectionSet, v *model.PaginatedUsers) graphql.Marshaler {
+func (ec *executionContext) marshalNPaginatedUsers2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐPaginatedUsers(ctx context.Context, sel ast.SelectionSet, v *model.PaginatedUsers) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -6236,7 +6381,7 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) marshalNTeam2ᚕᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐTeamᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Team) graphql.Marshaler {
+func (ec *executionContext) marshalNTeam2ᚕᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐTeamᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Team) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6260,7 +6405,7 @@ func (ec *executionContext) marshalNTeam2ᚕᚖgithubᚗcomᚋThanhbinh1905ᚋgo
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNTeam2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐTeam(ctx, sel, v[i])
+			ret[i] = ec.marshalNTeam2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐTeam(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6280,7 +6425,7 @@ func (ec *executionContext) marshalNTeam2ᚕᚖgithubᚗcomᚋThanhbinh1905ᚋgo
 	return ret
 }
 
-func (ec *executionContext) marshalNTeam2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐTeam(ctx context.Context, sel ast.SelectionSet, v *model.Team) graphql.Marshaler {
+func (ec *executionContext) marshalNTeam2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐTeam(ctx context.Context, sel ast.SelectionSet, v *model.Team) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -6290,16 +6435,16 @@ func (ec *executionContext) marshalNTeam2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑ
 	return ec._Team(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNTokenInput2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐTokenInput(ctx context.Context, v any) (model.TokenInput, error) {
+func (ec *executionContext) unmarshalNTokenInput2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐTokenInput(ctx context.Context, v any) (model.TokenInput, error) {
 	res, err := ec.unmarshalInputTokenInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNTokenValidationResponse2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐTokenValidationResponse(ctx context.Context, sel ast.SelectionSet, v model.TokenValidationResponse) graphql.Marshaler {
+func (ec *executionContext) marshalNTokenValidationResponse2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐTokenValidationResponse(ctx context.Context, sel ast.SelectionSet, v model.TokenValidationResponse) graphql.Marshaler {
 	return ec._TokenValidationResponse(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTokenValidationResponse2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐTokenValidationResponse(ctx context.Context, sel ast.SelectionSet, v *model.TokenValidationResponse) graphql.Marshaler {
+func (ec *executionContext) marshalNTokenValidationResponse2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐTokenValidationResponse(ctx context.Context, sel ast.SelectionSet, v *model.TokenValidationResponse) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -6325,12 +6470,12 @@ func (ec *executionContext) marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx
 	return res
 }
 
-func (ec *executionContext) unmarshalNUpdateUserInput2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUpdateUserInput(ctx context.Context, v any) (model.UpdateUserInput, error) {
+func (ec *executionContext) unmarshalNUpdateUserInput2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUpdateUserInput(ctx context.Context, v any) (model.UpdateUserInput, error) {
 	res, err := ec.unmarshalInputUpdateUserInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6354,7 +6499,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋThanhbinh1905ᚋgo
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6374,7 +6519,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋThanhbinh1905ᚋgo
 	return ret
 }
 
-func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -6384,16 +6529,16 @@ func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑ
 	return ec._User(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNUserInput2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUserInput(ctx context.Context, v any) (model.UserInput, error) {
+func (ec *executionContext) unmarshalNUserInput2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUserInput(ctx context.Context, v any) (model.UserInput, error) {
 	res, err := ec.unmarshalInputUserInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNUserMutationResponse2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUserMutationResponse(ctx context.Context, sel ast.SelectionSet, v model.UserMutationResponse) graphql.Marshaler {
+func (ec *executionContext) marshalNUserMutationResponse2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUserMutationResponse(ctx context.Context, sel ast.SelectionSet, v model.UserMutationResponse) graphql.Marshaler {
 	return ec._UserMutationResponse(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUserMutationResponse2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUserMutationResponse(ctx context.Context, sel ast.SelectionSet, v *model.UserMutationResponse) graphql.Marshaler {
+func (ec *executionContext) marshalNUserMutationResponse2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUserMutationResponse(ctx context.Context, sel ast.SelectionSet, v *model.UserMutationResponse) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -6403,13 +6548,13 @@ func (ec *executionContext) marshalNUserMutationResponse2ᚖgithubᚗcomᚋThanh
 	return ec._UserMutationResponse(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNUserType2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUserType(ctx context.Context, v any) (model.UserType, error) {
+func (ec *executionContext) unmarshalNUserType2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUserType(ctx context.Context, v any) (model.UserType, error) {
 	var res model.UserType
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNUserType2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUserType(ctx context.Context, sel ast.SelectionSet, v model.UserType) graphql.Marshaler {
+func (ec *executionContext) marshalNUserType2githubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUserType(ctx context.Context, sel ast.SelectionSet, v model.UserType) graphql.Marshaler {
 	return v
 }
 
@@ -6780,21 +6925,28 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalOTeam2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐTeam(ctx context.Context, sel ast.SelectionSet, v *model.Team) graphql.Marshaler {
+func (ec *executionContext) marshalOTeam2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐTeam(ctx context.Context, sel ast.SelectionSet, v *model.Team) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Team(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._User(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOUserPaginationInput2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUserPaginationInput(ctx context.Context, v any) (*model.UserPaginationInput, error) {
+func (ec *executionContext) marshalOUserClaims2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUserClaims(ctx context.Context, sel ast.SelectionSet, v *model.UserClaims) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UserClaims(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOUserPaginationInput2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUserPaginationInput(ctx context.Context, v any) (*model.UserPaginationInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -6802,7 +6954,7 @@ func (ec *executionContext) unmarshalOUserPaginationInput2ᚖgithubᚗcomᚋThan
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOUserType2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUserType(ctx context.Context, v any) (*model.UserType, error) {
+func (ec *executionContext) unmarshalOUserType2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUserType(ctx context.Context, v any) (*model.UserType, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -6811,7 +6963,7 @@ func (ec *executionContext) unmarshalOUserType2ᚖgithubᚗcomᚋThanhbinh1905�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOUserType2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋmodelᚐUserType(ctx context.Context, sel ast.SelectionSet, v *model.UserType) graphql.Marshaler {
+func (ec *executionContext) marshalOUserType2ᚖgithubᚗcomᚋThanhbinh1905ᚋgoᚑtrainingᚑsystemᚋservicesᚋuserᚑserviceᚋinternalᚋgraphᚋmodelᚐUserType(ctx context.Context, sel ast.SelectionSet, v *model.UserType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

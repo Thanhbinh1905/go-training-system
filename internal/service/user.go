@@ -3,10 +3,10 @@ package service
 import (
 	"context"
 
-	"github.com/Thanhbinh1905/go-training-system/internal/graph/apperror"
 	gqlmodel "github.com/Thanhbinh1905/go-training-system/internal/graph/model"
 	"github.com/Thanhbinh1905/go-training-system/internal/model"
 	"github.com/Thanhbinh1905/go-training-system/internal/repository"
+	"github.com/Thanhbinh1905/go-training-system/pkg/apperror"
 	"github.com/Thanhbinh1905/go-training-system/pkg/hash"
 )
 

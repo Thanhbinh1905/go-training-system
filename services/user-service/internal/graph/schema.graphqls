@@ -89,9 +89,14 @@ type AuthMutationResponse implements MutationResponse {
   user: User
 }
 
+type UserClaims {
+  id: UUID!
+  role: UserType!
+}
+
 type TokenValidationResponse {
   valid: Boolean!
-  user: User
+  user: UserClaims
 }
 
 # ===== QUERIES =====

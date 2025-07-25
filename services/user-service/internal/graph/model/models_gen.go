@@ -80,8 +80,8 @@ type TokenInput struct {
 }
 
 type TokenValidationResponse struct {
-	Valid bool  `json:"valid"`
-	User  *User `json:"user,omitempty"`
+	Valid bool        `json:"valid"`
+	User  *UserClaims `json:"user,omitempty"`
 }
 
 type UpdateUserInput struct {
@@ -96,6 +96,11 @@ type User struct {
 	Email     string    `json:"email"`
 	Role      UserType  `json:"role"`
 	CreatedAt *string   `json:"createdAt,omitempty"`
+}
+
+type UserClaims struct {
+	ID   uuid.UUID `json:"id"`
+	Role UserType  `json:"role"`
 }
 
 type UserInput struct {

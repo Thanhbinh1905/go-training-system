@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Thanhbinh1905/go-training-system/internal/graph/apperror"
 	"github.com/Thanhbinh1905/go-training-system/internal/graph/helper"
 	"github.com/Thanhbinh1905/go-training-system/internal/graph/model"
+	"github.com/Thanhbinh1905/go-training-system/pkg/apperror"
 	"github.com/Thanhbinh1905/go-training-system/pkg/jwt"
 )
 
