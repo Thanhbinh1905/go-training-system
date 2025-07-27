@@ -28,9 +28,10 @@ type userService struct {
 	tokenManager token.TokenManager
 }
 
-func NewUserService(repo repository.UserRepository) UserService {
+func NewUserService(repo repository.UserRepository, tokenManager token.TokenManager) UserService {
 	return &userService{
-		repo: repo,
+		repo:         repo,
+		tokenManager: tokenManager,
 	}
 }
 

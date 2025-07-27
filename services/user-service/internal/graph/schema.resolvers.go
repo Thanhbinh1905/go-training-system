@@ -25,7 +25,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input gqlmodel.Create
 		Password: input.Password,
 		Role:     model.UserRole(input.Role),
 	}
-	user, err := r.service.Register(ctx, arg)
+	user, err := r.Service.Register(ctx, arg)
 	if err != nil {
 		if err == apperror.ErrEmailTaken {
 			msg := err.Error()
@@ -55,7 +55,7 @@ func (r *mutationResolver) Login(ctx context.Context, input gqlmodel.UserInput) 
 		Email:    input.Email,
 		Password: input.Password,
 	}
-	authRes, err := r.service.Login(ctx, args)
+	authRes, err := r.Service.Login(ctx, args)
 	if err != nil {
 		if err == apperror.ErrInvalidLogin {
 			msg := err.Error()
@@ -87,7 +87,7 @@ func (r *queryResolver) Users(ctx context.Context, pagination *gqlmodel.UserPagi
 		}(),
 	}
 
-	paginatedUsers, err := r.service.FetchUsers(ctx, args)
+	paginatedUsers, err := r.Service.FetchUsers(ctx, args)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +112,7 @@ func (r *queryResolver) Users(ctx context.Context, pagination *gqlmodel.UserPagi
 
 // User is the resolver for the user field.
 func (r *queryResolver) User(ctx context.Context, id uuid.UUID) (*gqlmodel.User, error) {
-	user, err := r.service.User(ctx, id)
+	user, err := r.Service.User(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func (r *queryResolver) User(ctx context.Context, id uuid.UUID) (*gqlmodel.User,
 
 // VerifyToken is the resolver for the verifyToken field.
 func (r *queryResolver) VerifyToken(ctx context.Context, input gqlmodel.TokenInput) (*gqlmodel.TokenValidationResponse, error) {
-	validated, err := r.service.ValidateToken(&dto.TokenVerifyInput{
+	validated, err := r.Service.ValidateToken(&dto.TokenVerifyInput{
 		Token: input.Token,
 	})
 	if err != nil {

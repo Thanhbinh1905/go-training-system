@@ -7,5 +7,5 @@ import "github.com/Thanhbinh1905/go-training-system/services/user-service/intern
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	service service.UserService
+	Service service.UserService
 }
