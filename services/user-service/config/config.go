@@ -1,45 +1,35 @@
 package config
 
 import (
-	"log"
-	"os"
+	"fmt"
 
-	"github.com/joho/godotenv"
+	"github.com/spf13/viper"
 )
 
 type Config struct {
-	DatabaseURL string `mapstructure:"DATABASE_URL"`
-	JWTSecret   string `mapstructure:"JWT_SECRET"`
-	Port        string `mapstructure:"PORT"`
-	Production  bool   `mapstructure:"PRODUCTION"`
+	DatabaseURL string
+	JWTSecret   string
+	Production  bool
 }
 
-func LoadConfig() *Config {
-	godotenv.Load()
+func LoadConfig() (*Config, error) {
+	viper.SetConfigFile(".env")
+	viper.AutomaticEnv()
 
-	postgresHost := os.Getenv("POSTGRES_HOST")
-	postgresPort := os.Getenv("POSTGRES_PORT")
-	postgresUser := os.Getenv("POSTGRES_USER")
-	postgresPassword := os.Getenv("POSTGRES_PASSWORD")
-	postgresDB := os.Getenv("POSTGRES_DB")
-	if postgresHost == "" || postgresPort == "" || postgresUser == "" || postgresPassword == "" || postgresDB == "" {
-		log.Fatal("Missing required environment variables for database connection")
-		return nil
-	}
-	databaseUrl := "postgres://" + postgresUser + ":" + postgresPassword + "@" + postgresHost + ":" + postgresPort + "/" + postgresDB + "?sslmode=disable"
-	jwt := os.Getenv("JWT_SECRET")
-	port := os.Getenv("PORT")
-	production := os.Getenv("PRODUCTION") == "true"
+	_ = viper.ReadInConfig()
 
-	if jwt == "" || port == "" {
-		log.Fatal("Missing required environment variables for JWT secret or port")
-		return nil
+	// Validate biến bắt buộc
+	requiredVars := []string{"DATABASE_URL", "JWT_SECRET"}
+
+	for _, key := range requiredVars {
+		if !viper.IsSet(key) {
+			return nil, fmt.Errorf("missing required env variable: %s", key)
+		}
 	}
 
 	return &Config{
-		DatabaseURL: databaseUrl,
-		JWTSecret:   jwt,
-		Port:        port,
-		Production:  production,
-	}
+		DatabaseURL: viper.GetString("DATABASE_URL"),
+		JWTSecret:   viper.GetString("JWT_SECRET"),
+		Production:  viper.GetBool("PRODUCTION"), // default false nếu chưa set
+	}, nil
 }

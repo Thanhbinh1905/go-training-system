@@ -9,11 +9,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Thanhbinh1905/go-training-system/pkg/apperror"
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/dto"
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/graph/helper"
 	gqlmodel "github.com/Thanhbinh1905/go-training-system/services/user-service/internal/graph/model"
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/model"
+	"github.com/Thanhbinh1905/go-training-system/shared/apperror"
 	"github.com/google/uuid"
 )
 

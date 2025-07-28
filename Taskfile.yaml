@@ -3,6 +3,36 @@ version: '3'
 dotenv: ['.env']
 
 tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  initdb:
+    desc: Run PostgreSQL container with env vars
+    cmds:
+      - docker run --name seta-training \
+          -e POSTGRES_PASSWORD={{.POSTGRES_PASSWORD}} \
+          -e POSTGRES_USER={{.POSTGRES_USER}} \
+          -p {{.POSTGRES_PORT}}:5432 \
+          -d postgres:13.21-alpine3.21
+
+  createdb:
+    desc: Create a new PostgreSQL database inside the running container
+    cmds:
+      - docker exec -it seta-training createdb --username={{.POSTGRES_USER}} --owner={{.POSTGRES_USER}} {{.POSTGRES_DB}}
+
+  dropdb:
+    desc: Drop the PostgreSQL database if it exists
+    cmds:
+      - docker exec -it seta-training dropdb --username={{.POSTGRES_USER}} --if-exists {{.POSTGRES_DB}}
+
+  resetdb:
+    desc: Reset the PostgreSQL database by dropping and recreating it
+    cmds:
+      - task dropdb
+      - task createdb
+
   server:user:
     cmds:
       - go run services/user-service/server.go 
