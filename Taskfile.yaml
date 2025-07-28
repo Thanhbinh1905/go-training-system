@@ -36,3 +36,7 @@ tasks:
   server:user:
     cmds:
       - go run services/user-service/server.go 
+
+  pqsl-db:
+    cmds:
+      - docker exec -it postgres psql -U root -d training-system

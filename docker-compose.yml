@@ -1,21 +1,35 @@
 version: '3.8'
 
 services:
-  migrate:
-    build:
-      context: .
-      dockerfile: migration/Dockerfile
-    container_name: migrate-service
-    depends_on:
-      - postgres
-    environment:
-      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=
-    restart: "no"
+  # migrate:
+  #   build:
+  #     context: .
+  #     dockerfile: migration/Dockerfile
+  #   container_name: migrate-service
+  #   depends_on:
+  #     - postgres
+  #   environment:
+  #     DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=
+  #   restart: "no"
   user-service:
     build:
       context: .
       dockerfile: services/user-service/Dockerfile
     container_name: user-service
+    ports:
+      - "8081:8080"
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+      JWT_SECRET: ${JWT_SECRET}
+      PRODUCTION: ${PRODUCTION}
+
+  team-service:
+    build:
+      context: .
+      dockerfile: services/team-service/Dockerfile
+    container_name: team-service
     ports:
       - "8081:8080"
     depends_on:
