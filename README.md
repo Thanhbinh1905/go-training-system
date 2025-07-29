@@ -1,4 +1,3 @@
-````markdown
 # SETA Golang Training
 
 🏗 **Training Project:** Microservices for User, Team & Asset Management
