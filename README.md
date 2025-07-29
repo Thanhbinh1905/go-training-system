@@ -46,7 +46,6 @@ This system is split into three main services with clear domain boundaries:
   * `login(email, password)`
   * `logout`
   * `fetchUsers`
-  * `assignRole(userId, role)`
 * **Roles:**
 
   * `manager`: can create/manage teams
