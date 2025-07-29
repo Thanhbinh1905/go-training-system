@@ -1,0 +1,41 @@
+Chọn Loki datasource → nhập câu query LogQL sau:
+
+🔹 Tổng số request:
+logql
+Copy
+Edit
+count_over_time({service="team-service"}[1m])
+🔹 Số lượng theo status code:
+logql
+Copy
+Edit
+sum by (status) (
+  count_over_time({service="team-service"} |= "status" | json | status=~".*"[1m])
+)
+|= "status": lọc log có chứa "status"
+
+| json: parse JSON log
+
+status=~".*": lấy mọi status
+
+sum by (status): tổng theo từng mã code
+
+[1m]: khoảng thời gian tính toán (rolling mỗi 1 phút)
+
+🔹 Riêng 5xx:
+❌ Total Failed Requests (500):
+sum(
+  count_over_time(
+    {job="gin-app"} 
+    | json 
+    | status=~"5.." 
+    [$__range]
+  )
+)
+or vector(0)
+🔹 Riêng 2xx:
+
+sum by(job) (
+  count_over_time({job="team-service"} | json | status=~"2.." [$__range])
+)
+or vector(0)

@@ -1,0 +1,11 @@
+username,email,password,role
+john_doe,john@example.com,Password123,MEMBER
+jane_smith,jane@example.com,SecurePass456,MANAGER
+alice_jones,alice@example.com,12345678,MEMBER
+bob_williams,bob@example.com,myStrongPwd,MANAGER
+charlie_nguyen,charlie@example.com,password789,MEMBER
+lucy_lee,lucy@example.com,lucypass,MANAGER
+tom_tran,tom@example.com,pass1234,MEMBER
+emma_vo,emma@example.com,VoPass2024,MANAGER
+minh_pham,minh@example.com,hello123,MEMBER
+hannah_mai,hannah@example.com,maipassword,MANAGER

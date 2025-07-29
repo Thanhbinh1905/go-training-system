@@ -2,14 +2,16 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/config"
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/authclient"
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/handler"
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/repository"
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/service"
+	"github.com/Thanhbinh1905/go-training-system/services/team-service/pkg/logger"
 	"github.com/Thanhbinh1905/go-training-system/shared/db"
-	"github.com/Thanhbinh1905/go-training-system/shared/logger"
+	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
@@ -22,11 +24,12 @@ func main() {
 		log.Fatal("failed to Load config")
 	}
 
-	logger.InitLogger(cfg.Production)
+	log := logger.NewLogger("logs/team-service.log", "team-service")
+	defer log.Sync() // flush
 
 	conn, err := db.Connect(cfg.DatabaseURL)
 	if err != nil {
-		logger.Log.Error("failed to connect to database", zap.Error(err))
+		log.Error("failed to connect to database", zap.Error(err))
 	}
 	defer db.Close(conn)
 
@@ -37,6 +40,12 @@ func main() {
 
 	r := gin.Default()
 
+	// Gắn middleware log request (nên đặt đầu tiên)
+	r.Use(ginzap.Ginzap(log, time.RFC3339, true))
+
+	// Gắn middleware log panic recovery
+	r.Use(ginzap.RecoveryWithZap(log, true))
+
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
@@ -46,6 +55,6 @@ func main() {
 	r.DELETE("/teams/:teamID/managers/:managerID", teamHandler.RemoveManager)
 	r.DELETE("/teams/:teamID/members/:memberID", teamHandler.RemoveMember)
 
-	logger.Log.Info("Starting server on port " + "8080")
+	log.Info("Starting server on port " + "8080")
 	r.Run()
 }

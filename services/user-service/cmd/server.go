@@ -2,9 +2,11 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/graph"
+	htppHandler "github.com/Thanhbinh1905/go-training-system/services/user-service/internal/handler"
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/token"
 	"github.com/Thanhbinh1905/go-training-system/shared/logger"
 	"github.com/gin-gonic/gin"
@@ -65,6 +67,7 @@ func main() {
 	}
 
 	logger.InitLogger(cfg.Production)
+	defer logger.Log.Sync()
 
 	conn, err := db.Connect(cfg.DatabaseURL)
 	if err != nil {
@@ -74,14 +77,20 @@ func main() {
 
 	userRepo := repository.NewUserRepository(conn)
 	token := token.NewJWTManager(cfg.JWTSecret, cfg.JWTSecret, time.Hour*24, time.Hour*24*7)
-
 	userService := service.NewUserService(userRepo, token)
 
+	userHandler := htppHandler.NewUserHandler(userService)
 	gqlHandler := graphqlHandler(userService)
 
 	// Setting up Gin
 	r := gin.Default()
 	r.POST("/graphql", gqlHandler)
 	r.GET("/", playgroundHandler())
+
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	})
+
+	r.POST("/users", userHandler.CreateUserFromFile)
 	r.Run()
 }

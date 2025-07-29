@@ -1,21 +1,15 @@
-FROM golang:1.25rc2-alpine3.22 AS builder
+FROM golang:1.25rc2-alpine3.22
 
+# 1. Set WORKDIR tại gốc project (để go.work hoạt động)
 WORKDIR /app
 
+# 2. Copy toàn bộ monorepo vào container
 COPY . .
 
+# 3. Làm việc tại team-service
 WORKDIR /app/services/user-service
 
-RUN go mod tidy
+# 4. Cài air
+RUN go install github.com/air-verse/air@latest
 
-RUN go build -o user-service ./cmd
-
-FROM alpine:latest
-
-WORKDIR /app
-
-RUN apk add --no-cache ca-certificates
-
-COPY --from=builder /app/services/user-service/user-service .
-
-CMD ["./user-service"]
+CMD ["air"]

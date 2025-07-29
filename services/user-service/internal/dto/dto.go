@@ -61,3 +61,27 @@ type TokenVerifyResponse struct {
 	ExpiredAt   *time.Time  `json:"expired_at,omitempty"`
 	ErrorReason string      `json:"error_reason,omitempty"`
 }
+
+type UserCSV struct {
+	Username string
+	Email    string
+	Password string
+	Role     model.UserRole
+}
+
+type ImportResult struct {
+	Success int `json:"success"`
+	Failed  int `json:"failed"`
+}
+
+type Job struct {
+	User       UserCSV
+	LineNumber int
+}
+
+type Result struct {
+	Success    bool   `json:"success"`
+	Error      error  `json:"error,omitempty"`
+	LineNumber int    `json:"line,omitempty"`
+	Email      string `json:"email,omitempty"`
+}

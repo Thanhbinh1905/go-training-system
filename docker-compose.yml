@@ -37,6 +37,7 @@ services:
       - user-service
     volumes:
       - .:/app 
+      - ./services/team-service/logs:/app/logs
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
       PRODUCTION: ${PRODUCTION}
@@ -53,6 +54,29 @@ services:
     restart: unless-stopped
     volumes:
       - postgres-data:/var/lib/postgresql/data
+  loki:
+    image: grafana/loki:2.9.4
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
 
+  promtail:
+    image: grafana/promtail:2.9.4
+    volumes:
+      - ./services/team-service/logs:/var/log/team-service
+      - ./promtail-config.yml:/etc/promtail/promtail-config.yml
+    command: -config.file=/etc/promtail/promtail-config.yml
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:10.3.1
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - loki
 volumes:
   postgres-data:

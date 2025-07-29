@@ -9,9 +9,7 @@ import (
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/dto"
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/model"
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/repository"
-	"github.com/Thanhbinh1905/go-training-system/shared/logger"
 	"github.com/google/uuid"
-	"go.uber.org/zap"
 )
 
 type TeamService interface {
@@ -39,8 +37,6 @@ func (s *teamService) CreateTeam(ctx context.Context, token string, input *dto.C
 	if err != nil {
 		return err
 	}
-
-	logger.Log.Info("Creating team", zap.String("team_name", input.TeamName), zap.String("created_by", createdByID.String()))
 
 	newTeamId := uuid.New()
 
