@@ -9,7 +9,9 @@ import (
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/dto"
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/model"
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/repository"
+	"github.com/Thanhbinh1905/go-training-system/shared/logger"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 type TeamService interface {
@@ -38,6 +40,8 @@ func (s *teamService) CreateTeam(ctx context.Context, token string, input *dto.C
 		return err
 	}
 
+	logger.Log.Info("Creating team", zap.String("team_name", input.TeamName), zap.String("created_by", createdByID.String()))
+
 	newTeamId := uuid.New()
 
 	team := &model.Team{
@@ -58,8 +62,10 @@ func (s *teamService) CreateTeam(ctx context.Context, token string, input *dto.C
 		joinedErr = errors.Join(joinedErr, fmt.Errorf("add managers failed: %w", err))
 	}
 
-	if err := s.repo.AddMember(ctx, createdByID, newTeamId, input.Members); err != nil {
-		joinedErr = errors.Join(joinedErr, fmt.Errorf("add members failed: %w", err))
+	if input.Members != nil {
+		if err := s.repo.AddMember(ctx, createdByID, newTeamId, input.Members); err != nil {
+			joinedErr = errors.Join(joinedErr, fmt.Errorf("add members failed: %w", err))
+		}
 	}
 
 	if joinedErr != nil {

@@ -50,7 +50,7 @@ func graphqlHandler(userService service.UserService) gin.HandlerFunc {
 
 // Defining the Playground handler
 func playgroundHandler() gin.HandlerFunc {
-	h := playground.Handler("GraphQL", "/graphQL")
+	h := playground.Handler("GraphQL", "/graphql")
 
 	return func(c *gin.Context) {
 		h.ServeHTTP(c.Writer, c.Request)
@@ -81,7 +81,7 @@ func main() {
 
 	// Setting up Gin
 	r := gin.Default()
-	r.POST("/graphQL", gqlHandler)
+	r.POST("/graphql", gqlHandler)
 	r.GET("/", playgroundHandler())
 	r.Run()
 }

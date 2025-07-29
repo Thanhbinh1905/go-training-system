@@ -132,9 +132,10 @@ func (r *queryResolver) VerifyToken(ctx context.Context, input gqlmodel.TokenInp
 	validated, err := r.Service.ValidateToken(&dto.TokenVerifyInput{
 		Token: input.Token,
 	})
-	if err != nil {
+	if err != nil || validated == nil || validated.User == nil {
 		return &gqlmodel.TokenValidationResponse{
 			Valid: false,
+			User:  nil,
 		}, nil
 	}
 

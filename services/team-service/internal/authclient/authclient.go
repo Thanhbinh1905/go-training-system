@@ -3,14 +3,15 @@ package authclient
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/machinebox/graphql"
 )
 
 const verifyRequest string = `
-		query VerifyToken($input: String!) {
-			verifyToken(input: { token: $input }) {
+		query VerifyToken($input: TokenInput!) {
+			verifyToken(input: $input) {
 				valid
 				user {
 					id
@@ -23,9 +24,9 @@ const verifyRequest string = `
 type VerifyTokenResponse struct {
 	VerifyToken struct {
 		Valid bool `json:"valid"`
-		User  struct {
-			ID   uuid.UUID `json:"id"`
-			Role string    `json:"role"`
+		User  *struct {
+			ID   uuid.UUID `json:"id"`   // hoặc uuid.UUID nếu bạn map đúng
+			Role string    `json:"role"` // hoặc gqlmodel.UserType
 		} `json:"user"`
 	} `json:"verifyToken"`
 }
@@ -35,18 +36,23 @@ type AuthServiceClient struct {
 }
 
 func NewAuthServiceClient(authServiceURL string) *AuthServiceClient {
+
 	return &AuthServiceClient{
 		client: graphql.NewClient(authServiceURL),
 	}
 }
 
 func (a *AuthServiceClient) VerifyToken(ctx context.Context, token string) (*VerifyTokenResponse, error) {
-	req := graphql.NewRequest(verifyRequest)
+	token = strings.TrimPrefix(token, "Bearer ")
 
-	req.Var("input", token)
+	req := graphql.NewRequest(verifyRequest)
+	req.Var("input", map[string]interface{}{
+		"token": token,
+	})
 
 	var resp VerifyTokenResponse
 	if err := a.client.Run(ctx, req, &resp); err != nil {
+
 		return nil, fmt.Errorf("failed to verify token: %w", err)
 	}
 

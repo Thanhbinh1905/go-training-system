@@ -36,7 +36,6 @@ input TokenInput {
   token: String!
 }
 
-# 👇 Add for pagination
 input UserPaginationInput {
   limit: Int = 10
   offset: Int = 0
