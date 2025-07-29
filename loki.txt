@@ -21,7 +21,6 @@ status=~".*": lấy mọi status
 sum by (status): tổng theo từng mã code
 
 [1m]: khoảng thời gian tính toán (rolling mỗi 1 phút)
-
 🔹 Riêng 5xx:
 ❌ Total Failed Requests (500):
 sum(
