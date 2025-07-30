@@ -13,6 +13,7 @@ import (
 	"github.com/Thanhbinh1905/go-training-system/shared/db"
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
+	ginprometheus "github.com/zsais/go-gin-prometheus"
 	"go.uber.org/zap"
 )
 
@@ -30,6 +31,7 @@ func main() {
 	conn, err := db.Connect(cfg.DatabaseURL)
 	if err != nil {
 		log.Error("failed to connect to database", zap.Error(err))
+		return
 	}
 	defer db.Close(conn)
 
@@ -40,11 +42,11 @@ func main() {
 
 	r := gin.Default()
 
-	// Gắn middleware log request (nên đặt đầu tiên)
 	r.Use(ginzap.Ginzap(log, time.RFC3339, true))
-
-	// Gắn middleware log panic recovery
 	r.Use(ginzap.RecoveryWithZap(log, true))
+
+	p := ginprometheus.NewPrometheus("team_service")
+	p.Use(r)
 
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
