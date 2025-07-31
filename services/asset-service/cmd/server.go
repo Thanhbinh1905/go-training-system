@@ -59,9 +59,9 @@ func main() {
 	r.POST("/notes/:noteId/share", sharingHandler.ShareNote)
 	r.DELETE("/notes/:noteId/share/:userId", sharingHandler.RevokeNoteShare)
 
-	assetService := service.NewAssetService(folderRepo, noteRepo, folderShareRepo, noteShareRepo)
-	assetHandler := handler.NewAssetHandler(assetService)
+	// assetService := service.NewAssetService(folderRepo, noteRepo, folderShareRepo, noteShareRepo)
+	// assetHandler := handler.NewAssetHandler(assetService)
 
-	r.GET("/users/:userId/assets", assetHandler.GetUserAssets)
-	r.GET("/teams/:teamId/assets", assetHandler.GetTeamAssets)
+	// r.GET("/users/:userId/assets", assetHandler.GetUserAssets)
+	// r.GET("/teams/:teamId/assets", assetHandler.GetTeamAssets)
 }
