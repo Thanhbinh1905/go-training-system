@@ -56,4 +56,7 @@ tasks:
   proto:user:
     cmds:
       - protoc --proto_path=services/user-service/proto --go_out=services/user-service/pb --go_opt=paths=source_relative --go-grpc_out=services/user-service/pb --go-grpc_opt=paths=source_relative services/user-service/proto/user.proto
+  proto:team:
+    cmds:
+      - protoc --proto_path=services/team-service/proto --go_out=services/team-service/pb --go_opt=paths=source_relative --go-grpc_out=services/team-service/pb --go-grpc_opt=paths=source_relative services/team-service/proto/user.proto
 

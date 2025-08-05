@@ -20,46 +20,47 @@ func NewTeamHandler(service service.TeamService) *TeamHandler {
 }
 
 func (h *TeamHandler) CreateTeam(c *gin.Context) {
+	userID, err := GetUserIDFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
 	var req dto.CreateTeamInput
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	token := c.GetHeader("Authorization")
-	if token == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization token is required"})
-		return
-	}
-
-	if err := h.service.CreateTeam(c.Request.Context(), token, &req); err != nil {
+	if err := h.service.CreateTeam(c.Request.Context(), userID, &req); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
 	c.JSON(http.StatusCreated, gin.H{"message": "Team created successfully"})
 }
 
 func (h *TeamHandler) AddManager(c *gin.Context) {
-	teamID := c.Param("teamID")
-
-	if teamID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Team ID is required"})
+	userID, err := GetUserIDFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
-	token := c.GetHeader("Authorization")
-	if token == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization token is required"})
+	teamIDStr := c.Param("teamID")
+	teamID, err := uuid.Parse(teamIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid team ID"})
 		return
 	}
 
-	var req *dto.AddManagerInput
+	var req dto.AddManagerInput
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := h.service.AddManager(c.Request.Context(), token, uuid.MustParse(teamID), req.ManagerIDs); err != nil {
+	if err := h.service.AddManager(c.Request.Context(), userID, teamID, req.ManagerIDs); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -68,16 +69,16 @@ func (h *TeamHandler) AddManager(c *gin.Context) {
 }
 
 func (s *TeamHandler) AddMember(c *gin.Context) {
+	userID, err := GetUserIDFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
 	teamID := c.Param("teamID")
 
 	if teamID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Team ID is required"})
-		return
-	}
-
-	token := c.GetHeader("Authorization")
-	if token == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization token is required"})
 		return
 	}
 
@@ -87,7 +88,7 @@ func (s *TeamHandler) AddMember(c *gin.Context) {
 		return
 	}
 
-	if err := s.service.AddMember(c.Request.Context(), token, uuid.MustParse(teamID), req.MemberIDs); err != nil {
+	if err := s.service.AddMember(c.Request.Context(), userID, uuid.MustParse(teamID), req.MemberIDs); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -104,13 +105,7 @@ func (s *TeamHandler) RemoveManager(c *gin.Context) {
 		return
 	}
 
-	token := c.GetHeader("Authorization")
-	if token == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization token is required"})
-		return
-	}
-
-	if err := s.service.RemoveManager(c.Request.Context(), token, uuid.MustParse(teamID), uuid.MustParse(managerID)); err != nil {
+	if err := s.service.RemoveManager(c.Request.Context(), uuid.MustParse(teamID), uuid.MustParse(managerID)); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -127,16 +122,19 @@ func (s *TeamHandler) RemoveMember(c *gin.Context) {
 		return
 	}
 
-	token := c.GetHeader("Authorization")
-	if token == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization token is required"})
-		return
-	}
-
-	if err := s.service.RemoveMember(c.Request.Context(), token, uuid.MustParse(teamID), uuid.MustParse(memberID)); err != nil {
+	if err := s.service.RemoveMember(c.Request.Context(), uuid.MustParse(teamID), uuid.MustParse(memberID)); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Member removed successfully"})
+}
+
+func GetUserIDFromContext(c *gin.Context) (uuid.UUID, error) {
+	ctx := c.Request.Context()
+	userIDStr, ok := ctx.Value("userID").(string)
+	if !ok {
+		return uuid.Nil, nil
+	}
+	return uuid.Parse(userIDStr)
 }

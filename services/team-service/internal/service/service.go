@@ -5,39 +5,35 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/authclient"
+	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/client"
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/dto"
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/model"
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/repository"
+	"github.com/Thanhbinh1905/go-training-system/services/team-service/pb"
 	"github.com/google/uuid"
 )
 
 type TeamService interface {
-	CreateTeam(ctx context.Context, token string, input *dto.CreateTeamInput) error
-	AddManager(ctx context.Context, token string, teamID uuid.UUID, managerIDs []uuid.UUID) error
-	RemoveManager(ctx context.Context, token string, teamID uuid.UUID, managerID uuid.UUID) error
-	AddMember(ctx context.Context, token string, teamID uuid.UUID, managerIDs []uuid.UUID) error
-	RemoveMember(ctx context.Context, token string, teamID uuid.UUID, managerID uuid.UUID) error
+	CreateTeam(ctx context.Context, added_by uuid.UUID, input *dto.CreateTeamInput) error
+	AddManager(ctx context.Context, createdByID, teamID uuid.UUID, managerIDs []uuid.UUID) error
+	RemoveManager(ctx context.Context, teamID uuid.UUID, managerID uuid.UUID) error
+	AddMember(ctx context.Context, createdByID, teamID uuid.UUID, managerIDs []uuid.UUID) error
+	RemoveMember(ctx context.Context, teamID uuid.UUID, managerID uuid.UUID) error
 }
 
 type teamService struct {
 	repo       repository.TeamRepositorty
-	authClient authclient.AuthServiceClient
+	userClient client.UserGRPCClient
 }
 
-func NewTeamService(repo repository.TeamRepositorty, authClient authclient.AuthServiceClient) TeamService {
+func NewTeamService(repo repository.TeamRepositorty, userClient client.UserGRPCClient) TeamService {
 	return &teamService{
 		repo:       repo,
-		authClient: authClient,
+		userClient: userClient,
 	}
 }
 
-func (s *teamService) CreateTeam(ctx context.Context, token string, input *dto.CreateTeamInput) error {
-	createdByID, err := s.authorizeManager(ctx, token)
-	if err != nil {
-		return err
-	}
-
+func (s *teamService) CreateTeam(ctx context.Context, createdByID uuid.UUID, input *dto.CreateTeamInput) error {
 	newTeamId := uuid.New()
 
 	team := &model.Team{
@@ -54,12 +50,12 @@ func (s *teamService) CreateTeam(ctx context.Context, token string, input *dto.C
 
 	input.Managers = append(input.Managers, createdByID)
 
-	if err := s.repo.AddManager(ctx, createdByID, newTeamId, input.Managers); err != nil {
+	if err := s.AddManager(ctx, createdByID, newTeamId, input.Managers); err != nil {
 		joinedErr = errors.Join(joinedErr, fmt.Errorf("add managers failed: %w", err))
 	}
 
 	if input.Members != nil {
-		if err := s.repo.AddMember(ctx, createdByID, newTeamId, input.Members); err != nil {
+		if err := s.AddMember(ctx, createdByID, newTeamId, input.Members); err != nil {
 			joinedErr = errors.Join(joinedErr, fmt.Errorf("add members failed: %w", err))
 		}
 	}
@@ -71,25 +67,25 @@ func (s *teamService) CreateTeam(ctx context.Context, token string, input *dto.C
 	return nil
 }
 
-func (s *teamService) AddManager(ctx context.Context, token string, teamID uuid.UUID, managerIDs []uuid.UUID) error {
-	createdByID, err := s.authorizeManager(ctx, token)
-	if err != nil {
-		return err
-	}
+func (s *teamService) AddManager(ctx context.Context, createdByID, teamID uuid.UUID, managerIDs []uuid.UUID) error {
+	for _, managerID := range managerIDs {
+		resp, err := s.userClient.Client.IsUserExist(ctx, &pb.GetUserRequest{UserId: managerID.String()})
+		if err != nil {
+			return fmt.Errorf("check user existence failed: %w", err)
+		}
+		if !resp.IsExist {
+			return fmt.Errorf("user with ID %s does not exist", managerID)
+		}
 
-	if err := s.repo.AddManager(ctx, createdByID, teamID, managerIDs); err != nil {
-		return fmt.Errorf("add managers failed: %w", err)
+		if err := s.repo.AddMember(ctx, createdByID, teamID, managerID); err != nil {
+			return fmt.Errorf("add manager failed: %w", err)
+		}
 	}
 
 	return nil
 }
 
-func (s *teamService) RemoveManager(ctx context.Context, token string, teamID uuid.UUID, managerID uuid.UUID) error {
-	_, err := s.authorizeManager(ctx, token)
-	if err != nil {
-		return err
-	}
-
+func (s *teamService) RemoveManager(ctx context.Context, teamID uuid.UUID, managerID uuid.UUID) error {
 	if err := s.repo.RemoveManager(ctx, teamID, managerID); err != nil {
 		return fmt.Errorf("remove managers failed: %w", err)
 	}
@@ -97,45 +93,29 @@ func (s *teamService) RemoveManager(ctx context.Context, token string, teamID uu
 	return nil
 }
 
-func (s *teamService) AddMember(ctx context.Context, token string, teamID uuid.UUID, memberIDs []uuid.UUID) error {
-	createdByID, err := s.authorizeManager(ctx, token)
-	if err != nil {
-		return err
-	}
+func (s *teamService) AddMember(ctx context.Context, createdByID, teamID uuid.UUID, memberIDs []uuid.UUID) error {
 
-	if err := s.repo.AddMember(ctx, createdByID, teamID, memberIDs); err != nil {
-		return fmt.Errorf("add managers failed: %w", err)
+	for _, memberID := range memberIDs {
+		resp, err := s.userClient.Client.IsUserExist(ctx, &pb.GetUserRequest{UserId: memberID.String()})
+		if err != nil {
+			return fmt.Errorf("check user existence failed: %w", err)
+		}
+		if !resp.IsExist {
+			return fmt.Errorf("user with ID %s does not exist", memberID)
+		}
+
+		if err := s.repo.AddMember(ctx, createdByID, teamID, memberID); err != nil {
+			return fmt.Errorf("add member failed: %w", err)
+		}
 	}
 
 	return nil
 }
 
-func (s *teamService) RemoveMember(ctx context.Context, token string, teamID uuid.UUID, memberID uuid.UUID) error {
-	_, err := s.authorizeManager(ctx, token)
-	if err != nil {
-		return err
-	}
-
+func (s *teamService) RemoveMember(ctx context.Context, teamID uuid.UUID, memberID uuid.UUID) error {
 	if err := s.repo.RemoveMember(ctx, teamID, memberID); err != nil {
 		return fmt.Errorf("remove managers failed: %w", err)
 	}
 
 	return nil
-}
-
-func (s *teamService) authorizeManager(ctx context.Context, token string) (uuid.UUID, error) {
-	resp, err := s.authClient.VerifyToken(ctx, token)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("verify token failed: %w", err)
-	}
-
-	if !resp.VerifyToken.Valid || resp.VerifyToken.User.ID == uuid.Nil {
-		return uuid.Nil, errors.New("unauthorized: invalid token")
-	}
-
-	if resp.VerifyToken.User.Role != "MANAGER" {
-		return uuid.Nil, errors.New("forbidden: only MANAGER allowed")
-	}
-
-	return resp.VerifyToken.User.ID, nil
 }

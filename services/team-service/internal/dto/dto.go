@@ -3,10 +3,9 @@ package dto
 import "github.com/google/uuid"
 
 type CreateTeamInput struct {
-	TeamName  string      `json:"team_name" binding:"required"`
-	Managers  []uuid.UUID `json:"managers" binding:"required,dive,required,uuid"`
-	Members   []uuid.UUID `json:"members" binding:"dive,uuid"`
-	CreatedBy uuid.UUID   `json:"-" binding:"uuid"`
+	TeamName string      `json:"team_name" binding:"required"`
+	Managers []uuid.UUID `json:"managers" binding:"required,dive,required,uuid"`
+	Members  []uuid.UUID `json:"members" binding:"dive,uuid"`
 }
 
 type AddManagerInput struct {
