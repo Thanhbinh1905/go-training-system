@@ -18,7 +18,6 @@ func LoadConfig() (*Config, error) {
 
 	_ = viper.ReadInConfig()
 
-	// Validate biến bắt buộc
 	requiredVars := []string{"DATABASE_URL", "JWT_SECRET"}
 
 	for _, key := range requiredVars {
@@ -30,6 +29,6 @@ func LoadConfig() (*Config, error) {
 	return &Config{
 		DatabaseURL: viper.GetString("DATABASE_URL"),
 		JWTSecret:   viper.GetString("JWT_SECRET"),
-		Production:  viper.GetBool("PRODUCTION"), // default false nếu chưa set
+		Production:  viper.GetBool("PRODUCTION"),
 	}, nil
 }

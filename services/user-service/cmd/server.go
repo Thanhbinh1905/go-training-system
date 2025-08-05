@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
+	htppHandler "github.com/Thanhbinh1905/go-training-system/services/user-service/internal/api"
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/graph"
-	htppHandler "github.com/Thanhbinh1905/go-training-system/services/user-service/internal/handler"
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/token"
 	"github.com/Thanhbinh1905/go-training-system/shared/logger"
 	"github.com/gin-gonic/gin"

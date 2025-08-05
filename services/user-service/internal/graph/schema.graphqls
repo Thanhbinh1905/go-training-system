@@ -58,17 +58,6 @@ type PaginatedUsers {
   offset: Int!
 }
 
-type Team {
-  teamId: UUID!
-  teamName: String!
-  managers: [User!]!
-  members: [User!]!
-  totalManagers: Int!
-  totalMembers: Int!
-  createdAt: DateTime
-  updatedAt: DateTime
-}
-
 # ===== RESPONSES =====
 type UserMutationResponse implements MutationResponse {
   code: String!
@@ -103,10 +92,6 @@ type Query {
   users(pagination: UserPaginationInput): PaginatedUsers!
   user(id: UUID!): User
   verifyToken(input: TokenInput!): TokenValidationResponse!
-
-  teams: [Team!]!
-  team(teamId: UUID!): Team
-  myTeams: [Team!]!
 }
 
 # ===== MUTATIONS =====

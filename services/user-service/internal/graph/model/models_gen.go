@@ -64,17 +64,6 @@ type PaginatedUsers struct {
 type Query struct {
 }
 
-type Team struct {
-	TeamID        uuid.UUID `json:"teamId"`
-	TeamName      string    `json:"teamName"`
-	Managers      []*User   `json:"managers"`
-	Members       []*User   `json:"members"`
-	TotalManagers int32     `json:"totalManagers"`
-	TotalMembers  int32     `json:"totalMembers"`
-	CreatedAt     *string   `json:"createdAt,omitempty"`
-	UpdatedAt     *string   `json:"updatedAt,omitempty"`
-}
-
 type TokenInput struct {
 	Token string `json:"token"`
 }

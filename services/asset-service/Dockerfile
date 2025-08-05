@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY . .
 
-WORKDIR /app/services/team-service
+WORKDIR /app/services/asset-service
 
 RUN go install github.com/air-verse/air@latest
 
