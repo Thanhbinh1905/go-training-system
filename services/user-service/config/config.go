@@ -10,6 +10,7 @@ type Config struct {
 	DatabaseURL string
 	JWTSecret   string
 	Production  bool
+	GRPCPort    string
 }
 
 func LoadConfig() (*Config, error) {
@@ -18,7 +19,7 @@ func LoadConfig() (*Config, error) {
 
 	_ = viper.ReadInConfig()
 
-	requiredVars := []string{"DATABASE_URL", "JWT_SECRET"}
+	requiredVars := []string{"DATABASE_URL", "JWT_SECRET", "PRODUCTION", "GRPC_PORT"}
 
 	for _, key := range requiredVars {
 		if !viper.IsSet(key) {
@@ -30,5 +31,6 @@ func LoadConfig() (*Config, error) {
 		DatabaseURL: viper.GetString("DATABASE_URL"),
 		JWTSecret:   viper.GetString("JWT_SECRET"),
 		Production:  viper.GetBool("PRODUCTION"),
+		GRPCPort:    viper.GetString("GRPC_PORT"),
 	}, nil
 }

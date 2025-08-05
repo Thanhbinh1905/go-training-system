@@ -70,6 +70,7 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@user-db:5432/user?sslmode=disable
       JWT_SECRET: ${JWT_SECRET}
       PRODUCTION: ${PRODUCTION}
+      GRPC_PORT: 50051
     networks:
       - backend-net
       

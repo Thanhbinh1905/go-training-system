@@ -49,9 +49,14 @@ message VerifyTokenRequest {
   string access_token = 1;
 }
 
-message VerifyTokenResponse {
+message UserInfo {
   string user_id = 1;
   Role role = 2;
+}
+
+message VerifyTokenResponse {
+  UserInfo user_info = 1;
+  BaseResponse base = 2;
   bool is_valid = 3;
 }
 

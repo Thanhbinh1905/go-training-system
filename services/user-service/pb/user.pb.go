@@ -390,10 +390,62 @@ func (x *VerifyTokenRequest) GetAccessToken() string {
 	return ""
 }
 
-type VerifyTokenResponse struct {
+type UserInfo struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Role          Role                   `protobuf:"varint,2,opt,name=role,proto3,enum=user.Role" json:"role,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UserInfo) Reset() {
+	*x = UserInfo{}
+	mi := &file_user_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UserInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UserInfo) ProtoMessage() {}
+
+func (x *UserInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_user_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UserInfo.ProtoReflect.Descriptor instead.
+func (*UserInfo) Descriptor() ([]byte, []int) {
+	return file_user_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *UserInfo) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *UserInfo) GetRole() Role {
+	if x != nil {
+		return x.Role
+	}
+	return Role_ROLE_UNSPECIFIED
+}
+
+type VerifyTokenResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserInfo      *UserInfo              `protobuf:"bytes,1,opt,name=user_info,json=userInfo,proto3" json:"user_info,omitempty"`
+	Base          *BaseResponse          `protobuf:"bytes,2,opt,name=base,proto3" json:"base,omitempty"`
 	IsValid       bool                   `protobuf:"varint,3,opt,name=is_valid,json=isValid,proto3" json:"is_valid,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -401,7 +453,7 @@ type VerifyTokenResponse struct {
 
 func (x *VerifyTokenResponse) Reset() {
 	*x = VerifyTokenResponse{}
-	mi := &file_user_proto_msgTypes[6]
+	mi := &file_user_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -413,7 +465,7 @@ func (x *VerifyTokenResponse) String() string {
 func (*VerifyTokenResponse) ProtoMessage() {}
 
 func (x *VerifyTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_user_proto_msgTypes[6]
+	mi := &file_user_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -426,21 +478,21 @@ func (x *VerifyTokenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VerifyTokenResponse.ProtoReflect.Descriptor instead.
 func (*VerifyTokenResponse) Descriptor() ([]byte, []int) {
-	return file_user_proto_rawDescGZIP(), []int{6}
+	return file_user_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *VerifyTokenResponse) GetUserId() string {
+func (x *VerifyTokenResponse) GetUserInfo() *UserInfo {
 	if x != nil {
-		return x.UserId
+		return x.UserInfo
 	}
-	return ""
+	return nil
 }
 
-func (x *VerifyTokenResponse) GetRole() Role {
+func (x *VerifyTokenResponse) GetBase() *BaseResponse {
 	if x != nil {
-		return x.Role
+		return x.Base
 	}
-	return Role_ROLE_UNSPECIFIED
+	return nil
 }
 
 func (x *VerifyTokenResponse) GetIsValid() bool {
@@ -459,7 +511,7 @@ type GetUsersByIdsRequest struct {
 
 func (x *GetUsersByIdsRequest) Reset() {
 	*x = GetUsersByIdsRequest{}
-	mi := &file_user_proto_msgTypes[7]
+	mi := &file_user_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -471,7 +523,7 @@ func (x *GetUsersByIdsRequest) String() string {
 func (*GetUsersByIdsRequest) ProtoMessage() {}
 
 func (x *GetUsersByIdsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_user_proto_msgTypes[7]
+	mi := &file_user_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -484,7 +536,7 @@ func (x *GetUsersByIdsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUsersByIdsRequest.ProtoReflect.Descriptor instead.
 func (*GetUsersByIdsRequest) Descriptor() ([]byte, []int) {
-	return file_user_proto_rawDescGZIP(), []int{7}
+	return file_user_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *GetUsersByIdsRequest) GetUserIds() []string {
@@ -504,7 +556,7 @@ type GetUsersByIdsResponse struct {
 
 func (x *GetUsersByIdsResponse) Reset() {
 	*x = GetUsersByIdsResponse{}
-	mi := &file_user_proto_msgTypes[8]
+	mi := &file_user_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -516,7 +568,7 @@ func (x *GetUsersByIdsResponse) String() string {
 func (*GetUsersByIdsResponse) ProtoMessage() {}
 
 func (x *GetUsersByIdsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_user_proto_msgTypes[8]
+	mi := &file_user_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -529,7 +581,7 @@ func (x *GetUsersByIdsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUsersByIdsResponse.ProtoReflect.Descriptor instead.
 func (*GetUsersByIdsResponse) Descriptor() ([]byte, []int) {
-	return file_user_proto_rawDescGZIP(), []int{8}
+	return file_user_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GetUsersByIdsResponse) GetBase() *BaseResponse {
@@ -573,11 +625,14 @@ const file_user_proto_rawDesc = "" +
 	"\x04base\x18\x01 \x01(\v2\x12.user.BaseResponseR\x04base\x12\x19\n" +
 	"\bis_exist\x18\x02 \x01(\bR\aisExist\"7\n" +
 	"\x12VerifyTokenRequest\x12!\n" +
-	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\"i\n" +
-	"\x13VerifyTokenResponse\x12\x17\n" +
+	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\"C\n" +
+	"\bUserInfo\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1e\n" +
 	"\x04role\x18\x02 \x01(\x0e2\n" +
-	".user.RoleR\x04role\x12\x19\n" +
+	".user.RoleR\x04role\"\x85\x01\n" +
+	"\x13VerifyTokenResponse\x12+\n" +
+	"\tuser_info\x18\x01 \x01(\v2\x0e.user.UserInfoR\buserInfo\x12&\n" +
+	"\x04base\x18\x02 \x01(\v2\x12.user.BaseResponseR\x04base\x12\x19\n" +
 	"\bis_valid\x18\x03 \x01(\bR\aisValid\"1\n" +
 	"\x14GetUsersByIdsRequest\x12\x19\n" +
 	"\buser_ids\x18\x01 \x03(\tR\auserIds\"l\n" +
@@ -608,7 +663,7 @@ func file_user_proto_rawDescGZIP() []byte {
 }
 
 var file_user_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_user_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_user_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_user_proto_goTypes = []any{
 	(Role)(0),                     // 0: user.Role
 	(*BaseResponse)(nil),          // 1: user.BaseResponse
@@ -617,31 +672,34 @@ var file_user_proto_goTypes = []any{
 	(*GetUserResponse)(nil),       // 4: user.GetUserResponse
 	(*IsUserExistResponse)(nil),   // 5: user.IsUserExistResponse
 	(*VerifyTokenRequest)(nil),    // 6: user.VerifyTokenRequest
-	(*VerifyTokenResponse)(nil),   // 7: user.VerifyTokenResponse
-	(*GetUsersByIdsRequest)(nil),  // 8: user.GetUsersByIdsRequest
-	(*GetUsersByIdsResponse)(nil), // 9: user.GetUsersByIdsResponse
+	(*UserInfo)(nil),              // 7: user.UserInfo
+	(*VerifyTokenResponse)(nil),   // 8: user.VerifyTokenResponse
+	(*GetUsersByIdsRequest)(nil),  // 9: user.GetUsersByIdsRequest
+	(*GetUsersByIdsResponse)(nil), // 10: user.GetUsersByIdsResponse
 }
 var file_user_proto_depIdxs = []int32{
 	0,  // 0: user.User.role:type_name -> user.Role
 	1,  // 1: user.GetUserResponse.base:type_name -> user.BaseResponse
 	3,  // 2: user.GetUserResponse.user:type_name -> user.User
 	1,  // 3: user.IsUserExistResponse.base:type_name -> user.BaseResponse
-	0,  // 4: user.VerifyTokenResponse.role:type_name -> user.Role
-	1,  // 5: user.GetUsersByIdsResponse.base:type_name -> user.BaseResponse
-	4,  // 6: user.GetUsersByIdsResponse.users:type_name -> user.GetUserResponse
-	2,  // 7: user.UserService.GetUser:input_type -> user.GetUserRequest
-	2,  // 8: user.UserService.IsUserExist:input_type -> user.GetUserRequest
-	6,  // 9: user.UserService.VerifyAccessToken:input_type -> user.VerifyTokenRequest
-	8,  // 10: user.UserService.GetUsersByIds:input_type -> user.GetUsersByIdsRequest
-	4,  // 11: user.UserService.GetUser:output_type -> user.GetUserResponse
-	5,  // 12: user.UserService.IsUserExist:output_type -> user.IsUserExistResponse
-	7,  // 13: user.UserService.VerifyAccessToken:output_type -> user.VerifyTokenResponse
-	9,  // 14: user.UserService.GetUsersByIds:output_type -> user.GetUsersByIdsResponse
-	11, // [11:15] is the sub-list for method output_type
-	7,  // [7:11] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	0,  // 4: user.UserInfo.role:type_name -> user.Role
+	7,  // 5: user.VerifyTokenResponse.user_info:type_name -> user.UserInfo
+	1,  // 6: user.VerifyTokenResponse.base:type_name -> user.BaseResponse
+	1,  // 7: user.GetUsersByIdsResponse.base:type_name -> user.BaseResponse
+	4,  // 8: user.GetUsersByIdsResponse.users:type_name -> user.GetUserResponse
+	2,  // 9: user.UserService.GetUser:input_type -> user.GetUserRequest
+	2,  // 10: user.UserService.IsUserExist:input_type -> user.GetUserRequest
+	6,  // 11: user.UserService.VerifyAccessToken:input_type -> user.VerifyTokenRequest
+	9,  // 12: user.UserService.GetUsersByIds:input_type -> user.GetUsersByIdsRequest
+	4,  // 13: user.UserService.GetUser:output_type -> user.GetUserResponse
+	5,  // 14: user.UserService.IsUserExist:output_type -> user.IsUserExistResponse
+	8,  // 15: user.UserService.VerifyAccessToken:output_type -> user.VerifyTokenResponse
+	10, // 16: user.UserService.GetUsersByIds:output_type -> user.GetUsersByIdsResponse
+	13, // [13:17] is the sub-list for method output_type
+	9,  // [9:13] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_user_proto_init() }
@@ -655,7 +713,7 @@ func file_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_user_proto_rawDesc), len(file_user_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   9,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

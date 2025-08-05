@@ -2,12 +2,14 @@ package main
 
 import (
 	"log"
+	"net"
 	"net/http"
 	"time"
 
 	htppHandler "github.com/Thanhbinh1905/go-training-system/services/user-service/internal/api"
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/graph"
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/token"
+	"github.com/Thanhbinh1905/go-training-system/services/user-service/pb"
 	"github.com/Thanhbinh1905/go-training-system/shared/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -22,6 +24,9 @@ import (
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/repository"
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/service"
 	"github.com/Thanhbinh1905/go-training-system/shared/db"
+	"google.golang.org/grpc"
+
+	userRPC "github.com/Thanhbinh1905/go-training-system/services/user-service/internal/grpc"
 )
 
 // Defining the Graphql handler
@@ -59,6 +64,21 @@ func playgroundHandler() gin.HandlerFunc {
 	}
 }
 
+func RunGRPCServer(userService service.UserService, port string) {
+	lis, err := net.Listen("tcp", ":"+port)
+	if err != nil {
+		log.Fatalf("failed to listen on gRPC port: %v", err)
+	}
+
+	grpcServer := grpc.NewServer()
+	pb.RegisterUserServiceServer(grpcServer, userRPC.NewUserRPCHandler(userService))
+
+	log.Println("gRPC server listening on :50051")
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatalf("failed to serve gRPC: %v", err)
+	}
+}
+
 func main() {
 
 	cfg, err := config.LoadConfig()
@@ -79,18 +99,21 @@ func main() {
 	token := token.NewJWTManager(cfg.JWTSecret, cfg.JWTSecret, time.Hour*24, time.Hour*24*7)
 	userService := service.NewUserService(userRepo, token)
 
+	go RunGRPCServer(userService, cfg.GRPCPort)
+
 	userHandler := htppHandler.NewUserHandler(userService)
 	gqlHandler := graphqlHandler(userService)
 
 	// Setting up Gin
 	r := gin.Default()
 	r.POST("/graphql", gqlHandler)
-	r.GET("/", playgroundHandler())
+	v1 := r.Group("/api/v1") // ✅ Tạo group
+	v1.GET("/", playgroundHandler())
 
-	r.GET("/health", func(c *gin.Context) {
+	v1.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
-	r.POST("/users", userHandler.CreateUserFromFile)
-	r.Run()
+	v1.POST("/users", userHandler.CreateUserFromFile)
+	r.Run(":8080")
 }
