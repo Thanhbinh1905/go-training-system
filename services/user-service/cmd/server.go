@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	htppHandler "github.com/Thanhbinh1905/go-training-system/services/user-service/internal/api"
-	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/graph"
-	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/token"
+	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/handler/graph"
+	htppHandler "github.com/Thanhbinh1905/go-training-system/services/user-service/internal/handler/http"
+	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/util/token"
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/pb"
 	"github.com/Thanhbinh1905/go-training-system/shared/logger"
 	"github.com/gin-gonic/gin"
@@ -26,7 +26,7 @@ import (
 	"github.com/Thanhbinh1905/go-training-system/shared/db"
 	"google.golang.org/grpc"
 
-	userRPC "github.com/Thanhbinh1905/go-training-system/services/user-service/internal/grpc"
+	userRPC "github.com/Thanhbinh1905/go-training-system/services/user-service/internal/handler/grpc"
 )
 
 // Defining the Graphql handler

@@ -1,10 +1,10 @@
-package helper
+package graphutil
 
 import (
 	"time"
 
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/dto"
-	gqlmodel "github.com/Thanhbinh1905/go-training-system/services/user-service/internal/graph/model"
+	gqlmodel "github.com/Thanhbinh1905/go-training-system/services/user-service/internal/handler/graph/model"
 )
 
 func NewUserMutationSuccess(user *gqlmodel.User) *gqlmodel.UserMutationResponse {

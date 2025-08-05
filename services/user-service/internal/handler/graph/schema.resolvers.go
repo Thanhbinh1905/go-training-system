@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/dto"
-	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/graph/helper"
-	gqlmodel "github.com/Thanhbinh1905/go-training-system/services/user-service/internal/graph/model"
+	gqlmodel "github.com/Thanhbinh1905/go-training-system/services/user-service/internal/handler/graph/model"
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/model"
+	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/util/graphutil"
 	"github.com/Thanhbinh1905/go-training-system/shared/apperror"
 	"github.com/google/uuid"
 )
@@ -29,15 +29,15 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input gqlmodel.Create
 	if err != nil {
 		if err == apperror.ErrEmailTaken {
 			msg := err.Error()
-			return helper.NewUserMutationError("400", &msg, nil), nil
+			return graphutil.NewUserMutationError("400", &msg, nil), nil
 		}
 		msg := err.Error()
-		return helper.NewUserMutationError("500", &msg, nil), nil
+		return graphutil.NewUserMutationError("500", &msg, nil), nil
 	}
 
 	if user == nil {
 		msg := "Failed to create user"
-		return helper.NewUserMutationError("500", &msg, nil), nil
+		return graphutil.NewUserMutationError("500", &msg, nil), nil
 	}
 	gqlUser := &gqlmodel.User{
 		ID:       user.ID,
@@ -46,7 +46,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input gqlmodel.Create
 		Role:     input.Role,
 	}
 
-	return helper.NewUserMutationSuccess(gqlUser), nil
+	return graphutil.NewUserMutationSuccess(gqlUser), nil
 }
 
 // UpdateUser is the resolver for the updateUser field.
@@ -64,13 +64,13 @@ func (r *mutationResolver) Login(ctx context.Context, input gqlmodel.UserInput) 
 	if err != nil {
 		if err == apperror.ErrInvalidLogin {
 			msg := err.Error()
-			return helper.AuthMutationError("401", msg, nil), nil
+			return graphutil.AuthMutationError("401", msg, nil), nil
 		}
 		msg := "Internal server error"
-		return helper.AuthMutationError("500", msg, nil), nil
+		return graphutil.AuthMutationError("500", msg, nil), nil
 	}
 
-	return helper.AuthMutationSuccess(authRes), nil
+	return graphutil.AuthMutationSuccess(authRes), nil
 }
 
 // Logout is the resolver for the logout field.
@@ -167,7 +167,7 @@ type queryResolver struct{ *Resolver }
 // one last chance to move it out of harms way if you want. There are two reasons this happens:
 //  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
 //    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+//  - You have graphutil methods in this file. Move them out to keep these resolver files clean.
 /*
 	func (r *queryResolver) Teams(ctx context.Context) ([]*gqlmodel.Team, error) {
 	panic(fmt.Errorf("not implemented: Teams - teams"))

@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/dto"
-	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/grpcutil"
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/service"
+	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/util/grpcutil"
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/pb"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"

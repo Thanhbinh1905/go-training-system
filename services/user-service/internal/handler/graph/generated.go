@@ -14,7 +14,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/graph/model"
+	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/handler/graph/model"
 	"github.com/google/uuid"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"

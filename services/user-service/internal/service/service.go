@@ -8,8 +8,8 @@ import (
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/dto"
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/model"
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/repository"
-	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/token"
-	"github.com/Thanhbinh1905/go-training-system/services/user-service/pkg/hash"
+	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/util/hash"
+	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/util/token"
 	"github.com/Thanhbinh1905/go-training-system/shared/apperror"
 
 	"github.com/google/uuid"
