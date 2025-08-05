@@ -77,7 +77,7 @@ func (s *teamService) AddManager(ctx context.Context, createdByID, teamID uuid.U
 			return fmt.Errorf("user with ID %s does not exist", managerID)
 		}
 
-		if err := s.repo.AddMember(ctx, createdByID, teamID, managerID); err != nil {
+		if err := s.repo.AddManager(ctx, createdByID, teamID, managerID); err != nil {
 			return fmt.Errorf("add manager failed: %w", err)
 		}
 	}

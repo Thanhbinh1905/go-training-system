@@ -3,25 +3,28 @@ package middleware
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/pb"
+	"github.com/Thanhbinh1905/go-training-system/services/team-service/pkg/contextkey"
 	"github.com/gin-gonic/gin"
-)
-
-type ctxKey string
-
-const (
-	ctxUserIDKey   ctxKey = "userID"
-	ctxUserRoleKey ctxKey = "userRole"
 )
 
 func AuthMiddleware(userClient pb.UserServiceClient, requireManager bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token := c.GetHeader("Authorization")
-		if token == "" {
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing token"})
 			return
 		}
+
+		const bearerPrefix = "Bearer "
+		if !strings.HasPrefix(authHeader, bearerPrefix) {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token format"})
+			return
+		}
+
+		token := strings.TrimPrefix(authHeader, bearerPrefix)
 
 		resp, err := userClient.VerifyAccessToken(c, &pb.VerifyTokenRequest{AccessToken: token})
 		if err != nil || !resp.IsValid {
@@ -33,10 +36,8 @@ func AuthMiddleware(userClient pb.UserServiceClient, requireManager bool) gin.Ha
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "not a manager"})
 			return
 		}
-
-		// Inject vào context
-		ctx := context.WithValue(c.Request.Context(), ctxUserIDKey, resp.UserInfo.GetUserId())
-		ctx = context.WithValue(ctx, ctxUserRoleKey, resp.UserInfo.GetRole())
+		ctx := context.WithValue(c.Request.Context(), contextkey.CtxUserIDKey(), resp.UserInfo.GetUserId())
+		ctx = context.WithValue(ctx, contextkey.CtxUserRoleKey(), resp.UserInfo.GetRole())
 		c.Request = c.Request.WithContext(ctx)
 
 		c.Next()

@@ -91,58 +91,58 @@ services:
       PRODUCTION: ${PRODUCTION}
     networks:
       - backend-net
-  # ================= MONITORING =================
-  loki:
-    image: grafana/loki:2.9.4
-    container_name: loki
-    ports:
-      - "3100:3100"
-    command: -config.file=/etc/loki/local-config.yaml
-    networks:
-      - monitoring-net
+#   # ================= MONITORING =================
+#   loki:
+#     image: grafana/loki:2.9.4
+#     container_name: loki
+#     ports:
+#       - "3100:3100"
+#     command: -config.file=/etc/loki/local-config.yaml
+#     networks:
+#       - monitoring-net
 
-  promtail:
-    image: grafana/promtail:2.9.4
-    container_name: promtail
-    volumes:
-      - ./services/team-service/logs:/var/log/team-service
-      - ./promtail-config.yml:/etc/promtail/promtail-config.yml
-    command: -config.file=/etc/promtail/promtail-config.yml
-    depends_on:
-      - loki
-    networks:
-      - monitoring-net
-      - backend-net 
+#   promtail:
+#     image: grafana/promtail:2.9.4
+#     container_name: promtail
+#     volumes:
+#       - ./services/team-service/logs:/var/log/team-service
+#       - ./promtail-config.yml:/etc/promtail/promtail-config.yml
+#     command: -config.file=/etc/promtail/promtail-config.yml
+#     depends_on:
+#       - loki
+#     networks:
+#       - monitoring-net
+#       - backend-net 
 
-  prometheus:
-    image: prom/prometheus
-    container_name: prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--web.enable-lifecycle'
-    networks:
-      - monitoring-net
-      - backend-net 
+#   prometheus:
+#     image: prom/prometheus
+#     container_name: prometheus
+#     ports:
+#       - "9090:9090"
+#     volumes:
+#       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+#     command:
+#       - '--config.file=/etc/prometheus/prometheus.yml'
+#       - '--web.enable-lifecycle'
+#     networks:
+#       - monitoring-net
+#       - backend-net 
 
-  grafana:
-    image: grafana/grafana:10.3.1
-    container_name: grafana
-    ports:
-      - "3000:3000"
-    environment:
-      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USERNAME}
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
-    depends_on:
-      - loki
-      - prometheus
-    networks:
-      - monitoring-net
+#   grafana:
+#     image: grafana/grafana:10.3.1
+#     container_name: grafana
+#     ports:
+#       - "3000:3000"
+#     environment:
+#       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USERNAME}
+#       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+#     depends_on:
+#       - loki
+#       - prometheus
+#     networks:
+#       - monitoring-net
 
-# ================= VOLUMES & NETWORKS =================
+# # ================= VOLUMES & NETWORKS =================
 
 volumes:
   user-data:

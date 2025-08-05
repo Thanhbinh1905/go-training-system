@@ -107,8 +107,8 @@ func main() {
 	// Setting up Gin
 	r := gin.Default()
 	r.POST("/graphql", gqlHandler)
+	r.GET("/", playgroundHandler())
 	v1 := r.Group("/api/v1") // ✅ Tạo group
-	v1.GET("/", playgroundHandler())
 
 	v1.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})

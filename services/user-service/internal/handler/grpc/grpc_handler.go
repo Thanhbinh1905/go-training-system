@@ -88,7 +88,7 @@ func (h *UserRPCHandler) VerifyAccessToken(ctx context.Context, req *pb.VerifyTo
 	}
 
 	valid, err := h.userService.ValidateToken(&dto.TokenVerifyInput{Token: req.GetAccessToken()})
-	if err != nil {
+	if err != nil || !valid.IsValid || valid.User == nil {
 		return &pb.VerifyTokenResponse{
 			Base:    grpcutil.BaseError("Failed to verify access token"),
 			IsValid: false,

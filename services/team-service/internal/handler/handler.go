@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/dto"
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/service"
+	"github.com/Thanhbinh1905/go-training-system/services/team-service/pkg/contextkey"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -132,9 +134,9 @@ func (s *TeamHandler) RemoveMember(c *gin.Context) {
 
 func GetUserIDFromContext(c *gin.Context) (uuid.UUID, error) {
 	ctx := c.Request.Context()
-	userIDStr, ok := ctx.Value("userID").(string)
-	if !ok {
-		return uuid.Nil, nil
+	userIDStr, ok := ctx.Value(contextkey.CtxUserIDKey()).(string)
+	if !ok || userIDStr == "" {
+		return uuid.Nil, fmt.Errorf("userID not found in context")
 	}
 	return uuid.Parse(userIDStr)
 }

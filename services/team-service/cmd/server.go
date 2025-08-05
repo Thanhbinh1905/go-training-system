@@ -18,7 +18,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const gRPC_URL = "user-service:9090"
+const gRPC_URL = "user-service:50051"
 
 func main() {
 	cfg, err := config.LoadConfig()
@@ -38,6 +38,7 @@ func main() {
 
 	teamRepo := repository.NewTeamRepository(conn)
 	userClient := client.NewUserGRPCClient(gRPC_URL)
+	log.Info("Connected to user service", zap.String("gRPC_URL", gRPC_URL))
 	teamService := service.NewTeamService(teamRepo, *userClient)
 	teamHandler := handler.NewTeamHandler(teamService)
 
