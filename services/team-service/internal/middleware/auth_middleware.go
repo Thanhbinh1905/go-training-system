@@ -5,12 +5,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Thanhbinh1905/go-training-system/services/team-service/pb"
+	userpb "github.com/Thanhbinh1905/go-training-system/services/team-service/pb/user"
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/pkg/contextkey"
 	"github.com/gin-gonic/gin"
 )
 
-func AuthMiddleware(userClient pb.UserServiceClient, requireManager bool) gin.HandlerFunc {
+func AuthMiddleware(userClient userpb.UserServiceClient, allowedRoles ...userpb.Role) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -26,18 +26,33 @@ func AuthMiddleware(userClient pb.UserServiceClient, requireManager bool) gin.Ha
 
 		token := strings.TrimPrefix(authHeader, bearerPrefix)
 
-		resp, err := userClient.VerifyAccessToken(c, &pb.VerifyTokenRequest{AccessToken: token})
+		resp, err := userClient.VerifyAccessToken(c, &userpb.VerifyTokenRequest{AccessToken: token})
 		if err != nil || !resp.IsValid {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
 			return
 		}
 
-		if requireManager && resp.UserInfo.GetRole() != pb.Role_MANAGER {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "not a manager"})
-			return
+		role := resp.UserInfo.GetRole()
+		userID := resp.UserInfo.GetUserId()
+
+		// Nếu có cấu hình allowedRoles, thì kiểm tra role có nằm trong đó không
+		if len(allowedRoles) > 0 {
+			allowed := false
+			for _, r := range allowedRoles {
+				if r == role {
+					allowed = true
+					break
+				}
+			}
+			if !allowed {
+				c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "unauthorized role"})
+				return
+			}
 		}
-		ctx := context.WithValue(c.Request.Context(), contextkey.CtxUserIDKey(), resp.UserInfo.GetUserId())
-		ctx = context.WithValue(ctx, contextkey.CtxUserRoleKey(), resp.UserInfo.GetRole())
+
+		// Inject userID và role vào context để downstream handler xài
+		ctx := context.WithValue(c.Request.Context(), contextkey.CtxUserIDKey(), userID)
+		ctx = context.WithValue(ctx, contextkey.CtxUserRoleKey(), role)
 		c.Request = c.Request.WithContext(ctx)
 
 		c.Next()

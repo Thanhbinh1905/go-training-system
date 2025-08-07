@@ -14,6 +14,8 @@ type TeamRepositorty interface {
 	RemoveMember(ctx context.Context, teamID uuid.UUID, userID uuid.UUID) error
 	AddManager(ctx context.Context, added_by uuid.UUID, teamID uuid.UUID, userID uuid.UUID) error
 	RemoveManager(ctx context.Context, teamID uuid.UUID, userID uuid.UUID) error
+	GetManagerIDsByTeamID(ctx context.Context, teamID uuid.UUID) ([]uuid.UUID, error)
+	GetMemberIDsByTeamID(ctx context.Context, teamID uuid.UUID) ([]uuid.UUID, error)
 }
 
 type teamRepositorty struct {
@@ -51,4 +53,44 @@ func (r *teamRepositorty) AddManager(ctx context.Context, added_by uuid.UUID, te
 
 func (r *teamRepositorty) RemoveManager(ctx context.Context, teamID uuid.UUID, userID uuid.UUID) error {
 	return r.db.WithContext(ctx).Where("team_id = ? AND user_id = ?", teamID, userID).Delete(&model.TeamManager{}).Error
+}
+
+func (r *teamRepositorty) GetManagersByTeamID(ctx context.Context, teamID uuid.UUID) ([]*model.TeamManager, error) {
+	var manager []*model.TeamManager
+	err := r.db.WithContext(ctx).Where("team_id = ?", teamID).Find(&manager).Error
+	if err != nil {
+		return nil, err
+	}
+	return manager, nil
+}
+
+func (r *teamRepositorty) GetManagerIDsByTeamID(ctx context.Context, teamID uuid.UUID) ([]uuid.UUID, error) {
+	var managerIDs []uuid.UUID
+	err := r.db.WithContext(ctx).Model(&model.TeamManager{}).
+		Where("team_id = ?", teamID).
+		Pluck("user_id", &managerIDs).Error
+	if err != nil {
+		return nil, err
+	}
+	return managerIDs, nil
+}
+
+func (r *teamRepositorty) GetMembersByTeamID(ctx context.Context, teamID uuid.UUID) ([]*model.TeamMember, error) {
+	var member []*model.TeamMember
+	err := r.db.WithContext(ctx).Where("team_id = ?", teamID).Find(&member).Error
+	if err != nil {
+		return nil, err
+	}
+	return member, nil
+}
+
+func (r *teamRepositorty) GetMemberIDsByTeamID(ctx context.Context, teamID uuid.UUID) ([]uuid.UUID, error) {
+	var memberIDs []uuid.UUID
+	err := r.db.WithContext(ctx).Model(&model.TeamMember{}).
+		Where("team_id = ?", teamID).
+		Pluck("user_id", &memberIDs).Error
+	if err != nil {
+		return nil, err
+	}
+	return memberIDs, nil
 }

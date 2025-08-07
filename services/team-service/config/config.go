@@ -9,6 +9,7 @@ import (
 type Config struct {
 	DatabaseURL string
 	Production  bool
+	GRPCPort    string
 }
 
 func LoadConfig() (*Config, error) {
@@ -18,7 +19,7 @@ func LoadConfig() (*Config, error) {
 	_ = viper.ReadInConfig()
 
 	// Validate biến bắt buộc
-	requiredVars := []string{"DATABASE_URL"}
+	requiredVars := []string{"DATABASE_URL", "GRPCPort", "PRODUCTION"}
 
 	for _, key := range requiredVars {
 		if !viper.IsSet(key) {
@@ -29,5 +30,6 @@ func LoadConfig() (*Config, error) {
 	return &Config{
 		DatabaseURL: viper.GetString("DATABASE_URL"),
 		Production:  viper.GetBool("PRODUCTION"),
+		GRPCPort:    viper.GetString("GRPC_PORT"),
 	}, nil
 }

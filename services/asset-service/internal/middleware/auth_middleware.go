@@ -1,0 +1,60 @@
+package middleware
+
+import (
+	"context"
+	"net/http"
+	"strings"
+
+	userpb "github.com/Thanhbinh1905/go-training-system/services/team-service/pb/user"
+	"github.com/Thanhbinh1905/go-training-system/services/team-service/pkg/contextkey"
+	"github.com/gin-gonic/gin"
+)
+
+func AuthMiddleware(userClient userpb.UserServiceClient, allowedRoles ...userpb.Role) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing token"})
+			return
+		}
+
+		const bearerPrefix = "Bearer "
+		if !strings.HasPrefix(authHeader, bearerPrefix) {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token format"})
+			return
+		}
+
+		token := strings.TrimPrefix(authHeader, bearerPrefix)
+
+		resp, err := userClient.VerifyAccessToken(c, &userpb.VerifyTokenRequest{AccessToken: token})
+		if err != nil || !resp.IsValid {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+			return
+		}
+
+		role := resp.UserInfo.GetRole()
+		userID := resp.UserInfo.GetUserId()
+
+		// Nếu có cấu hình allowedRoles, thì kiểm tra role có nằm trong đó không
+		if len(allowedRoles) > 0 {
+			allowed := false
+			for _, r := range allowedRoles {
+				if r == role {
+					allowed = true
+					break
+				}
+			}
+			if !allowed {
+				c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "unauthorized role"})
+				return
+			}
+		}
+
+		// Inject userID và role vào context để downstream handler xài
+		ctx := context.WithValue(c.Request.Context(), contextkey.CtxUserIDKey(), userID)
+		ctx = context.WithValue(ctx, contextkey.CtxUserRoleKey(), role)
+		c.Request = c.Request.WithContext(ctx)
+
+		c.Next()
+	}
+}

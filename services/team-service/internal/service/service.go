@@ -9,7 +9,7 @@ import (
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/dto"
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/model"
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/repository"
-	"github.com/Thanhbinh1905/go-training-system/services/team-service/pb"
+	userpb "github.com/Thanhbinh1905/go-training-system/services/team-service/pb/user"
 	"github.com/google/uuid"
 )
 
@@ -19,6 +19,9 @@ type TeamService interface {
 	RemoveManager(ctx context.Context, teamID uuid.UUID, managerID uuid.UUID) error
 	AddMember(ctx context.Context, createdByID, teamID uuid.UUID, managerIDs []uuid.UUID) error
 	RemoveMember(ctx context.Context, teamID uuid.UUID, managerID uuid.UUID) error
+	GetManagersByTeamID(ctx context.Context, teamID uuid.UUID) ([]*dto.TeamManagerResponse, error)
+	GetMembersByTeamID(ctx context.Context, teamID uuid.UUID) ([]*dto.TeamMemberResponse, error)
+	GetUsersByTeamID(ctx context.Context, teamID uuid.UUID) (*dto.TeamUsersResponse, error)
 }
 
 type teamService struct {
@@ -69,7 +72,7 @@ func (s *teamService) CreateTeam(ctx context.Context, createdByID uuid.UUID, inp
 
 func (s *teamService) AddManager(ctx context.Context, createdByID, teamID uuid.UUID, managerIDs []uuid.UUID) error {
 	for _, managerID := range managerIDs {
-		resp, err := s.userClient.Client.IsUserExist(ctx, &pb.GetUserRequest{UserId: managerID.String()})
+		resp, err := s.userClient.Client.IsUserExist(ctx, &userpb.GetUserRequest{UserId: managerID.String()})
 		if err != nil {
 			return fmt.Errorf("check user existence failed: %w", err)
 		}
@@ -96,7 +99,7 @@ func (s *teamService) RemoveManager(ctx context.Context, teamID uuid.UUID, manag
 func (s *teamService) AddMember(ctx context.Context, createdByID, teamID uuid.UUID, memberIDs []uuid.UUID) error {
 
 	for _, memberID := range memberIDs {
-		resp, err := s.userClient.Client.IsUserExist(ctx, &pb.GetUserRequest{UserId: memberID.String()})
+		resp, err := s.userClient.Client.IsUserExist(ctx, &userpb.GetUserRequest{UserId: memberID.String()})
 		if err != nil {
 			return fmt.Errorf("check user existence failed: %w", err)
 		}
@@ -118,4 +121,55 @@ func (s *teamService) RemoveMember(ctx context.Context, teamID uuid.UUID, member
 	}
 
 	return nil
+}
+
+func (s *teamService) GetManagersByTeamID(ctx context.Context, teamID uuid.UUID) ([]*dto.TeamManagerResponse, error) {
+	managers, err := s.repo.GetManagerIDsByTeamID(ctx, teamID)
+	if err != nil {
+		return nil, fmt.Errorf("get managers by team ID failed: %w", err)
+	}
+
+	var managerResponses []*dto.TeamManagerResponse
+	for _, managerID := range managers {
+
+		managerResponses = append(managerResponses, &dto.TeamManagerResponse{
+			ManagerID: managerID,
+		})
+	}
+
+	return managerResponses, nil
+}
+
+func (s *teamService) GetMembersByTeamID(ctx context.Context, teamID uuid.UUID) ([]*dto.TeamMemberResponse, error) {
+	members, err := s.repo.GetMemberIDsByTeamID(ctx, teamID)
+	if err != nil {
+		return nil, fmt.Errorf("get members by team ID failed: %w", err)
+	}
+
+	var memberResponses []*dto.TeamMemberResponse
+	for _, memberID := range members {
+
+		memberResponses = append(memberResponses, &dto.TeamMemberResponse{
+			MemberID: memberID,
+		})
+	}
+
+	return memberResponses, nil
+}
+
+func (s *teamService) GetUsersByTeamID(ctx context.Context, teamID uuid.UUID) (*dto.TeamUsersResponse, error) {
+	managers, err := s.GetManagersByTeamID(ctx, teamID)
+	if err != nil {
+		return nil, fmt.Errorf("get managers by team ID failed: %w", err)
+	}
+
+	members, err := s.GetMembersByTeamID(ctx, teamID)
+	if err != nil {
+		return nil, fmt.Errorf("get members by team ID failed: %w", err)
+	}
+
+	return &dto.TeamUsersResponse{
+		Managers: managers,
+		Members:  members,
+	}, nil
 }

@@ -92,6 +92,7 @@ services:
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@team-db:5432/team?sslmode=disable
       PRODUCTION: ${PRODUCTION}
+      GRPC_PORT: 50052
     networks:
       - backend-net
   # ================= MONITORING =================
