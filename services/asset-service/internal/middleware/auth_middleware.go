@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	userpb "github.com/Thanhbinh1905/go-training-system/services/team-service/pb/user"
-	"github.com/Thanhbinh1905/go-training-system/services/team-service/pkg/contextkey"
+	userpb "github.com/Thanhbinh1905/go-training-system/services/asset-service/pb/user"
+	"github.com/Thanhbinh1905/go-training-system/services/asset-service/pkg/contextkey"
 	"github.com/gin-gonic/gin"
 )
 

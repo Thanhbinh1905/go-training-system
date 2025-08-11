@@ -3,20 +3,20 @@ package client
 import (
 	"log"
 
-	"github.com/Thanhbinh1905/go-training-system/services/asset-service/pb"
+	userpb "github.com/Thanhbinh1905/go-training-system/services/asset-service/pb/user"
 	"google.golang.org/grpc"
 )
 
 type UserGRPCClient struct {
-	Client pb.UserServiceClient
+	Client userpb.UserServiceClient
 }
 
 func NewUserGRPCClient(addr string) *UserGRPCClient {
-	conn, err := grpc.Dial(addr, grpc.WithInsecure())
+	conn, err := grpc.NewClient(addr)
 	if err != nil {
 		log.Fatalf("Failed to connect to user-service gRPC: %v", err)
 	}
 
-	client := pb.NewUserServiceClient(conn)
+	client := userpb.NewUserServiceClient(conn)
 	return &UserGRPCClient{Client: client}
 }

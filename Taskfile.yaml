@@ -77,5 +77,19 @@ tasks:
 
   proto:asset:
     cmds:
-      - protoc --proto_path=services/asset-service/proto --go_out=services/asset-service/pb --go_opt=paths=source_relative --go-grpc_out=services/asset-service/pb --go-grpc_opt=paths=source_relative services/asset-service/proto/user.proto
-
+      - |
+        protoc \
+          --proto_path=services/asset-service/proto \
+          --go_out=services/asset-service/pb \
+          --go_opt=paths=source_relative \
+          --go-grpc_out=services/asset-service/pb \
+          --go-grpc_opt=paths=source_relative \
+          services/asset-service/proto/user/user.proto
+      - |
+        protoc \
+          --proto_path=services/asset-service/proto \
+          --go_out=services/asset-service/pb \
+          --go_opt=paths=source_relative \
+          --go-grpc_out=services/asset-service/pb \
+          --go-grpc_opt=paths=source_relative \
+          services/asset-service/proto/team/team.proto

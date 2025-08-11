@@ -13,13 +13,15 @@ import (
 	"go.uber.org/zap"
 )
 
+// const
+
 func main() {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatal("failed to Load config")
 	}
 
-	log := logger.NewLogger("logs/team-service.log", "team-service")
+	log := logger.NewLogger("logs/asset-service.log", "asset-service")
 	defer log.Sync() // flush
 
 	conn, err := db.Connect(cfg.DatabaseURL)

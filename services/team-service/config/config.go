@@ -19,7 +19,7 @@ func LoadConfig() (*Config, error) {
 	_ = viper.ReadInConfig()
 
 	// Validate biến bắt buộc
-	requiredVars := []string{"DATABASE_URL", "GRPCPort", "PRODUCTION"}
+	requiredVars := []string{"DATABASE_URL", "GRPC_PORT", "PRODUCTION"}
 
 	for _, key := range requiredVars {
 		if !viper.IsSet(key) {

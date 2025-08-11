@@ -24,7 +24,7 @@ func NewLogger(logFilePath string, serviceName string) *zap.Logger {
 	})
 
 	// Tạo folder nếu chưa có
-	if err := os.MkdirAll("logs", os.ModePerm); err != nil {
+	if err := os.MkdirAll("logs-team", os.ModePerm); err != nil {
 		log.Fatalf("Failed to create log folder: %v", err)
 	}
 

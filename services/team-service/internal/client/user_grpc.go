@@ -12,7 +12,7 @@ type UserGRPCClient struct {
 }
 
 func NewUserGRPCClient(addr string) *UserGRPCClient {
-	conn, err := grpc.Dial(addr, grpc.WithInsecure())
+	conn, err := grpc.NewClient(addr)
 	if err != nil {
 		log.Fatalf("Failed to connect to user-service gRPC: %v", err)
 	}
