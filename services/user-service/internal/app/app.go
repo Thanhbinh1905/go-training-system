@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/handler/graph"
-	htppHandler "github.com/Thanhbinh1905/go-training-system/services/user-service/internal/handler/http"
+	httpHandler "github.com/Thanhbinh1905/go-training-system/services/user-service/internal/handler/http"
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/util/token"
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/pb"
 	"github.com/Thanhbinh1905/go-training-system/shared/logger"
@@ -27,6 +27,7 @@ import (
 	"google.golang.org/grpc"
 
 	grpcHandler "github.com/Thanhbinh1905/go-training-system/services/user-service/internal/handler/grpc"
+	ginzap "github.com/gin-contrib/zap"
 )
 
 // Defining the Graphql handler
@@ -79,11 +80,13 @@ func RunGRPCServer(userService service.UserService, port string) {
 	}
 }
 
-func RunHTTPServer(userService service.UserService) {
-	userHandler := htppHandler.NewUserHandler(userService)
+func RunHTTPServer(userService service.UserService, log *zap.Logger) {
+	userHandler := httpHandler.NewUserHandler(userService)
 	gqlHandler := graphqlHandler(userService)
 
 	r := gin.Default()
+	r.Use(ginzap.Ginzap(log, time.RFC3339, true))
+	r.Use(ginzap.RecoveryWithZap(log, true))
 
 	// GraphQL
 	r.POST("/graphql", gqlHandler)
@@ -98,23 +101,23 @@ func RunHTTPServer(userService service.UserService) {
 		v1.POST("/users", userHandler.CreateUserFromFile)
 	}
 
-	logger.Log.Info("HTTP server listening", zap.String("port: ", "8080"))
+	log.Info("Starting HTTP server", zap.String("port", "8080"))
 	if err := r.Run(":8080"); err != nil {
-		logger.Log.Fatal("failed to start HTTP server", zap.Error(err))
+		log.Fatal("failed to run HTTP server", zap.Error(err))
 	}
 }
 
 func Run(cfg *config.Config) {
 	// Init Logger
-	logger.InitLogger(cfg.Production)
-	defer logger.Log.Sync()
+	log := logger.InitLogger("logs/user-service.log", "user-service")
+	defer log.Sync()
 
 	// DB connection
-	conn, err := db.Connect(cfg.DatabaseURL)
+	conn, err := db.Connect(cfg.DatabaseURL, log)
 	if err != nil {
-		logger.Log.Fatal("DB connection failed", zap.Error(err))
+		log.Fatal("DB connection failed", zap.Error(err))
 	}
-	defer db.Close(conn)
+	defer db.Close(conn, log)
 
 	// Init dependencies
 	userRepo := repository.NewUserRepository(conn)
@@ -125,5 +128,5 @@ func Run(cfg *config.Config) {
 	go RunGRPCServer(userService, cfg.GRPCPort)
 
 	// Start HTTP server (GraphQL + REST)
-	RunHTTPServer(userService)
+	RunHTTPServer(userService, log)
 }

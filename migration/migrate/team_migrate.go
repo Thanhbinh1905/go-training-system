@@ -2,18 +2,18 @@ package migrate
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/Thanhbinh1905/go-training-system/migration/model"
 	"github.com/Thanhbinh1905/go-training-system/shared/db"
+	"go.uber.org/zap"
 )
 
-func RunTeamMigrations(dbURL string) error {
-	conn, err := db.Connect(dbURL)
+func RunTeamMigrations(dbURL string, log *zap.Logger) error {
+	conn, err := db.Connect(dbURL, log)
 	if err != nil {
-		log.Fatal("failed to connect to database: ", err)
+		log.Fatal("failed to connect to database: ", zap.Error(err))
 	}
-	defer db.Close(conn)
+	defer db.Close(conn, log)
 
 	if err := conn.AutoMigrate(
 		&model.Team{},

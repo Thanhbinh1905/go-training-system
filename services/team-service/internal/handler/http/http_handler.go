@@ -6,7 +6,7 @@ import (
 
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/dto"
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/service"
-	"github.com/Thanhbinh1905/go-training-system/services/team-service/pkg/contextkey"
+	"github.com/Thanhbinh1905/go-training-system/shared/contextkey"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )

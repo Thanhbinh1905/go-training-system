@@ -2,47 +2,47 @@ package logger
 
 import (
 	"os"
+	"time"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-var Log *zap.Logger
-
-func InitLogger(isDev bool) {
-	var err error
-
-	if isDev {
-		Log, err = zap.NewDevelopment()
-		if err != nil {
-			panic("failed to init dev logger: " + err.Error())
-		}
-		return
+func InitLogger(serviceName, logFilePath string) *zap.Logger {
+	// Encoder config (JSON format)
+	encoderConfig := zapcore.EncoderConfig{
+		TimeKey:        "time",
+		LevelKey:       "level",
+		NameKey:        "logger",
+		CallerKey:      "caller",
+		MessageKey:     "msg",
+		StacktraceKey:  "stacktrace",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    zapcore.LowercaseLevelEncoder,
+		EncodeTime:     zapcore.ISO8601TimeEncoder,
+		EncodeDuration: zapcore.StringDurationEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder,
 	}
 
-	logPath := "./logs/app.log"
-	_ = os.MkdirAll("./logs", os.ModePerm)
-
-	file, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		panic("failed to open log file: " + err.Error())
-	}
-
-	encoderCfg := zapcore.EncoderConfig{
-		TimeKey:      "time",
-		LevelKey:     "level",
-		MessageKey:   "msg",
-		CallerKey:    "caller",
-		EncodeTime:   zapcore.ISO8601TimeEncoder,
-		EncodeLevel:  zapcore.CapitalLevelEncoder,
-		EncodeCaller: zapcore.ShortCallerEncoder,
-	}
-
-	core := zapcore.NewCore(
-		zapcore.NewJSONEncoder(encoderCfg),
-		zapcore.AddSync(file),
-		zapcore.InfoLevel,
+	// Multi-output: console + file
+	core := zapcore.NewTee(
+		zapcore.NewCore(zapcore.NewJSONEncoder(encoderConfig), zapcore.AddSync(os.Stdout), zapcore.InfoLevel),
+		zapcore.NewCore(zapcore.NewJSONEncoder(encoderConfig), zapcore.AddSync(&lumberjack.Logger{
+			Filename:   logFilePath,
+			MaxSize:    10, // megabytes
+			MaxBackups: 5,
+			MaxAge:     30, // days
+			Compress:   true,
+		}), zapcore.InfoLevel),
 	)
 
-	Log = zap.New(core, zap.AddCaller())
+	// Create logger with service field
+	logger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1)).With(
+		zap.String("service", serviceName),
+		zap.String("env", os.Getenv("ENV")),
+		zap.Time("start_time", time.Now()),
+	)
+
+	return logger
 }

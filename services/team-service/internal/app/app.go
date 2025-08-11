@@ -12,8 +12,8 @@ import (
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/service"
 	teampb "github.com/Thanhbinh1905/go-training-system/services/team-service/pb/team"
 	userpb "github.com/Thanhbinh1905/go-training-system/services/team-service/pb/user"
-	"github.com/Thanhbinh1905/go-training-system/services/team-service/pkg/logger"
 	"github.com/Thanhbinh1905/go-training-system/shared/db"
+	"github.com/Thanhbinh1905/go-training-system/shared/logger"
 
 	"net"
 
@@ -27,14 +27,14 @@ import (
 const userGRPCURL = "user-service:50051"
 
 func Run(cfg *config.Config) {
-	log := logger.NewLogger("logs/team-service.log", "team-service")
+	log := logger.InitLogger("logs/team-service.log", "team-service")
 	defer log.Sync()
 
-	conn, err := db.Connect(cfg.DatabaseURL)
+	conn, err := db.Connect(cfg.DatabaseURL, log)
 	if err != nil {
 		log.Fatal("failed to connect to database", zap.Error(err))
 	}
-	defer db.Close(conn)
+	defer db.Close(conn, log)
 
 	teamRepo := repository.NewTeamRepository(conn)
 	userClient := client.NewUserGRPCClient(userGRPCURL)

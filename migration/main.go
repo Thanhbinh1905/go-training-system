@@ -6,13 +6,21 @@ import (
 
 	"github.com/Thanhbinh1905/go-training-system/migration/config"
 	"github.com/Thanhbinh1905/go-training-system/migration/migrate"
+	"github.com/Thanhbinh1905/go-training-system/shared/logger"
+	"go.uber.org/zap"
 )
 
-func RunMigrations(name, dbURL string, migrateFn func(string) error) {
-	fmt.Printf("Running %s migrations...\n", name)
-	if err := migrateFn(dbURL); err != nil {
-		log.Fatalf("failed to run %s migrations: %v", name, err)
+func RunMigrations(logFilePath, serviceName, dbURL string, migrateFunc func(string, *zap.Logger) error) error {
+	log := logger.InitLogger(logFilePath, serviceName)
+	log.Info("Starting migration", zap.String("service", serviceName))
+
+	if err := migrateFunc(dbURL, log); err != nil {
+		log.Error("Migration failed", zap.Error(err))
+		return err
 	}
+
+	log.Info("Migration completed successfully", zap.String("service", serviceName))
+	return nil
 }
 
 func main() {
@@ -21,9 +29,9 @@ func main() {
 		log.Fatal("failed to load configuration")
 	}
 
-	RunMigrations("user", cfg.UserDBURL, migrate.RunUserMigrations)
-	RunMigrations("team", cfg.TeamDBURL, migrate.RunTeamMigrations)
-	RunMigrations("asset", cfg.AssetDBURL, migrate.RunAssetMigrations)
+	RunMigrations("logs/user_migration.log", "user", cfg.UserDBURL, migrate.RunUserMigrations)
+	RunMigrations("logs/team_migration.log", "team", cfg.TeamDBURL, migrate.RunTeamMigrations)
+	RunMigrations("logs/asset_migration.log", "asset", cfg.AssetDBURL, migrate.RunAssetMigrations)
 
 	fmt.Println("All migrations completed successfully")
 }

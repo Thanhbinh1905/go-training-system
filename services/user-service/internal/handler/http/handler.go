@@ -9,9 +9,7 @@ import (
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/dto"
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/model"
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/service"
-	"github.com/Thanhbinh1905/go-training-system/shared/logger"
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 )
 
 type UserHandler struct {
@@ -52,7 +50,6 @@ func (h *UserHandler) CreateUserFromFile(c *gin.Context) {
 
 		// Basic validation
 		if len(record) < 4 {
-			logger.Log.Warn("Invalid CSV format", zap.Int("line", line))
 			continue
 		}
 
@@ -101,8 +98,6 @@ func (h *UserHandler) CreateUserFromFile(c *gin.Context) {
 		}
 	}
 
-	logger.Log.Info("Import completed", zap.Int("success", summary.Success), zap.Int("failed", summary.Failed))
-
 	c.JSON(http.StatusOK, gin.H{
 		"success": summary.Success,
 		"failed":  summary.Failed,
@@ -121,11 +116,6 @@ func (h *UserHandler) worker(ctx context.Context, jobChan <-chan dto.Job, result
 
 		_, err := h.service.Register(ctx, input)
 		if err != nil {
-			logger.Log.Error("Failed to create user",
-				zap.String("email", job.User.Email),
-				zap.Int("line", job.LineNumber),
-				zap.Error(err),
-			)
 			resultChan <- dto.Result{
 				Success:    false,
 				Error:      err,
