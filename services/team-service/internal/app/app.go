@@ -85,5 +85,7 @@ func runHTTPServer(teamService service.TeamService, userClient client.UserGRPCCl
 	}
 
 	log.Info("HTTP server started", zap.String("port", "8080"))
-	r.Run(":8080")
+	if err := r.Run(":8080"); err != nil {
+		log.Fatal("failed to run HTTP server", zap.Error(err))
+	}
 }

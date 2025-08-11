@@ -13,19 +13,14 @@ import (
 func AuthMiddleware(userClient userpb.UserServiceClient, allowedRoles ...userpb.Role) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing token"})
+		if !strings.HasPrefix(authHeader, "Bearer ") {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing or invalid token"})
 			return
 		}
 
-		const bearerPrefix = "Bearer "
-		if !strings.HasPrefix(authHeader, bearerPrefix) {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token format"})
-			return
-		}
+		token := strings.TrimPrefix(authHeader, "Bearer ")
 
-		token := strings.TrimPrefix(authHeader, bearerPrefix)
-
+		// Verify token via gRPC
 		resp, err := userClient.VerifyAccessToken(c, &userpb.VerifyTokenRequest{AccessToken: token})
 		if err != nil || !resp.IsValid {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
@@ -35,7 +30,7 @@ func AuthMiddleware(userClient userpb.UserServiceClient, allowedRoles ...userpb.
 		role := resp.UserInfo.GetRole()
 		userID := resp.UserInfo.GetUserId()
 
-		// Nếu có cấu hình allowedRoles, thì kiểm tra role có nằm trong đó không
+		// Check role authorization
 		if len(allowedRoles) > 0 {
 			allowed := false
 			for _, r := range allowedRoles {
@@ -50,9 +45,9 @@ func AuthMiddleware(userClient userpb.UserServiceClient, allowedRoles ...userpb.
 			}
 		}
 
-		// Inject userID và role vào context để downstream handler xài
-		ctx := context.WithValue(c.Request.Context(), contextkey.CtxUserIDKey(), userID)
-		ctx = context.WithValue(ctx, contextkey.CtxUserRoleKey(), role)
+		// Inject vào request.Context để service đọc được
+		ctx := context.WithValue(c.Request.Context(), contextkey.UserIDKey(), userID)
+		ctx = context.WithValue(ctx, contextkey.UserRoleKey(), role)
 		c.Request = c.Request.WithContext(ctx)
 
 		c.Next()

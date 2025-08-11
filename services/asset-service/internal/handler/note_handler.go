@@ -1,11 +1,12 @@
-// internal/handler/note_handler.go
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/model"
 	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/service"
+	"github.com/Thanhbinh1905/go-training-system/shared/contextkey"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -18,23 +19,39 @@ func NewNoteHandler(noteService service.NoteService) *NoteHandler {
 	return &NoteHandler{noteService}
 }
 
+func getUserIDFromContext(c *gin.Context) (uuid.UUID, error) {
+	userIDStr, ok := c.Request.Context().Value(contextkey.CtxUserIDKey()).(string)
+	if !ok || userIDStr == "" {
+		return uuid.Nil, fmt.Errorf("userID not found in context")
+	}
+	return uuid.Parse(userIDStr)
+}
+
 // POST /folders/:folderId/notes
 func (h *NoteHandler) CreateNote(c *gin.Context) {
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
+		respondError(c, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
 	folderID, err := uuid.Parse(c.Param("folderId"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid folder ID"})
+		respondError(c, http.StatusBadRequest, "invalid folder ID")
 		return
 	}
 
 	var note model.Note
 	if err := c.ShouldBindJSON(&note); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondError(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	note.FolderID = folderID
 
-	if err := h.noteService.CreateNote(c.Request.Context(), &note); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create note"})
+	note.FolderID = folderID
+	note.OwnerID = userID
+
+	if err := h.noteService.CreateNote(c, &note); err != nil {
+		respondError(c, http.StatusInternalServerError, "failed to create note")
 		return
 	}
 	c.JSON(http.StatusCreated, note)
@@ -42,14 +59,21 @@ func (h *NoteHandler) CreateNote(c *gin.Context) {
 
 // GET /notes/:noteId
 func (h *NoteHandler) GetNote(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("noteId"))
+	_, err := getUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid note ID"})
+		respondError(c, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	note, err := h.noteService.GetNote(c.Request.Context(), id)
+
+	id, err := uuid.Parse(c.Param("noteId"))
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "note not found"})
+		respondError(c, http.StatusBadRequest, "invalid note ID")
+		return
+	}
+
+	note, err := h.noteService.GetNote(c, id)
+	if err != nil {
+		respondError(c, http.StatusNotFound, "note not found")
 		return
 	}
 	c.JSON(http.StatusOK, note)
@@ -57,21 +81,29 @@ func (h *NoteHandler) GetNote(c *gin.Context) {
 
 // PUT /notes/:noteId
 func (h *NoteHandler) UpdateNote(c *gin.Context) {
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
+		respondError(c, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
 	id, err := uuid.Parse(c.Param("noteId"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid note ID"})
+		respondError(c, http.StatusBadRequest, "invalid note ID")
 		return
 	}
 
 	var note model.Note
 	if err := c.ShouldBindJSON(&note); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondError(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	note.ID = id
 
-	if err := h.noteService.UpdateNote(c.Request.Context(), &note); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update note"})
+	note.ID = id
+	note.OwnerID = userID
+
+	if err := h.noteService.UpdateNote(c, &note); err != nil {
+		respondError(c, http.StatusInternalServerError, "failed to update note")
 		return
 	}
 	c.JSON(http.StatusOK, note)
@@ -79,13 +111,20 @@ func (h *NoteHandler) UpdateNote(c *gin.Context) {
 
 // DELETE /notes/:noteId
 func (h *NoteHandler) DeleteNote(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("noteId"))
+	_, err := getUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid note ID"})
+		respondError(c, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	if err := h.noteService.DeleteNote(c.Request.Context(), id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete note"})
+
+	id, err := uuid.Parse(c.Param("noteId"))
+	if err != nil {
+		respondError(c, http.StatusBadRequest, "invalid note ID")
+		return
+	}
+
+	if err := h.noteService.DeleteNote(c, id); err != nil {
+		respondError(c, http.StatusInternalServerError, "failed to delete note")
 		return
 	}
 	c.Status(http.StatusNoContent)

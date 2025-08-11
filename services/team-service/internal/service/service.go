@@ -10,14 +10,15 @@ import (
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/model"
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/repository"
 	userpb "github.com/Thanhbinh1905/go-training-system/services/team-service/pb/user"
+	"github.com/Thanhbinh1905/go-training-system/shared/contextkey"
 	"github.com/google/uuid"
 )
 
 type TeamService interface {
-	CreateTeam(ctx context.Context, added_by uuid.UUID, input *dto.CreateTeamInput) error
-	AddManager(ctx context.Context, createdByID, teamID uuid.UUID, managerIDs []uuid.UUID) error
+	CreateTeam(ctx context.Context, input *dto.CreateTeamInput) error
+	AddManager(ctx context.Context, teamID uuid.UUID, managerIDs []uuid.UUID) error
 	RemoveManager(ctx context.Context, teamID uuid.UUID, managerID uuid.UUID) error
-	AddMember(ctx context.Context, createdByID, teamID uuid.UUID, managerIDs []uuid.UUID) error
+	AddMember(ctx context.Context, teamID uuid.UUID, managerIDs []uuid.UUID) error
 	RemoveMember(ctx context.Context, teamID uuid.UUID, managerID uuid.UUID) error
 	GetManagersByTeamID(ctx context.Context, teamID uuid.UUID) ([]*dto.TeamManagerResponse, error)
 	GetMembersByTeamID(ctx context.Context, teamID uuid.UUID) ([]*dto.TeamMemberResponse, error)
@@ -36,13 +37,18 @@ func NewTeamService(repo repository.TeamRepositorty, userClient client.UserGRPCC
 	}
 }
 
-func (s *teamService) CreateTeam(ctx context.Context, createdByID uuid.UUID, input *dto.CreateTeamInput) error {
+func (s *teamService) CreateTeam(ctx context.Context, input *dto.CreateTeamInput) error {
+	userID, err := contextkey.GetUserIDFromContext(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get user id from context: %w", err)
+	}
+
 	newTeamId := uuid.New()
 
 	team := &model.Team{
 		ID:          newTeamId,
 		TeamName:    input.TeamName,
-		CreatedByID: createdByID,
+		CreatedByID: userID,
 	}
 
 	if err := s.repo.Create(ctx, team); err != nil {
@@ -51,14 +57,14 @@ func (s *teamService) CreateTeam(ctx context.Context, createdByID uuid.UUID, inp
 
 	var joinedErr error
 
-	input.Managers = append(input.Managers, createdByID)
+	input.Managers = append(input.Managers, userID)
 
-	if err := s.AddManager(ctx, createdByID, newTeamId, input.Managers); err != nil {
+	if err := s.AddManager(ctx, newTeamId, input.Managers); err != nil {
 		joinedErr = errors.Join(joinedErr, fmt.Errorf("add managers failed: %w", err))
 	}
 
 	if input.Members != nil {
-		if err := s.AddMember(ctx, createdByID, newTeamId, input.Members); err != nil {
+		if err := s.AddMember(ctx, newTeamId, input.Members); err != nil {
 			joinedErr = errors.Join(joinedErr, fmt.Errorf("add members failed: %w", err))
 		}
 	}
@@ -70,7 +76,12 @@ func (s *teamService) CreateTeam(ctx context.Context, createdByID uuid.UUID, inp
 	return nil
 }
 
-func (s *teamService) AddManager(ctx context.Context, createdByID, teamID uuid.UUID, managerIDs []uuid.UUID) error {
+func (s *teamService) AddManager(ctx context.Context, teamID uuid.UUID, managerIDs []uuid.UUID) error {
+	userID, err := contextkey.GetUserIDFromContext(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get user id from context: %w", err)
+	}
+
 	for _, managerID := range managerIDs {
 		resp, err := s.userClient.Client.IsUserExist(ctx, &userpb.GetUserRequest{UserId: managerID.String()})
 		if err != nil {
@@ -80,7 +91,7 @@ func (s *teamService) AddManager(ctx context.Context, createdByID, teamID uuid.U
 			return fmt.Errorf("user with ID %s does not exist", managerID)
 		}
 
-		if err := s.repo.AddManager(ctx, createdByID, teamID, managerID); err != nil {
+		if err := s.repo.AddManager(ctx, userID, teamID, managerID); err != nil {
 			return fmt.Errorf("add manager failed: %w", err)
 		}
 	}
@@ -96,7 +107,11 @@ func (s *teamService) RemoveManager(ctx context.Context, teamID uuid.UUID, manag
 	return nil
 }
 
-func (s *teamService) AddMember(ctx context.Context, createdByID, teamID uuid.UUID, memberIDs []uuid.UUID) error {
+func (s *teamService) AddMember(ctx context.Context, teamID uuid.UUID, memberIDs []uuid.UUID) error {
+	userID, err := contextkey.GetUserIDFromContext(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get user id from context: %w", err)
+	}
 
 	for _, memberID := range memberIDs {
 		resp, err := s.userClient.Client.IsUserExist(ctx, &userpb.GetUserRequest{UserId: memberID.String()})
@@ -107,7 +122,7 @@ func (s *teamService) AddMember(ctx context.Context, createdByID, teamID uuid.UU
 			return fmt.Errorf("user with ID %s does not exist", memberID)
 		}
 
-		if err := s.repo.AddMember(ctx, createdByID, teamID, memberID); err != nil {
+		if err := s.repo.AddMember(ctx, userID, teamID, memberID); err != nil {
 			return fmt.Errorf("add member failed: %w", err)
 		}
 	}

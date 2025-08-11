@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	userpb "github.com/Thanhbinh1905/go-training-system/services/asset-service/pb/user"
-	"github.com/Thanhbinh1905/go-training-system/services/asset-service/pkg/contextkey"
+	"github.com/Thanhbinh1905/go-training-system/shared/contextkey"
 	"github.com/gin-gonic/gin"
 )
 
@@ -35,7 +35,7 @@ func AuthMiddleware(userClient userpb.UserServiceClient, allowedRoles ...userpb.
 		role := resp.UserInfo.GetRole()
 		userID := resp.UserInfo.GetUserId()
 
-		// Nếu có cấu hình allowedRoles, thì kiểm tra role có nằm trong đó không
+		// Check role if allowedRoles are specified
 		if len(allowedRoles) > 0 {
 			allowed := false
 			for _, r := range allowedRoles {
@@ -50,7 +50,6 @@ func AuthMiddleware(userClient userpb.UserServiceClient, allowedRoles ...userpb.
 			}
 		}
 
-		// Inject userID và role vào context để downstream handler xài
 		ctx := context.WithValue(c.Request.Context(), contextkey.CtxUserIDKey(), userID)
 		ctx = context.WithValue(ctx, contextkey.CtxUserRoleKey(), role)
 		c.Request = c.Request.WithContext(ctx)
