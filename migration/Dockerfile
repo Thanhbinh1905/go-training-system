@@ -9,7 +9,7 @@ WORKDIR /app/migration
 RUN go mod tidy
 
 RUN go build -o migration .
-
+# good
 FROM alpine:latest
 
 WORKDIR /app

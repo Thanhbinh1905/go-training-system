@@ -22,6 +22,7 @@ func Connect(dbURL string) (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+	// should ping after opening the connection
 
 	return db, nil
 }

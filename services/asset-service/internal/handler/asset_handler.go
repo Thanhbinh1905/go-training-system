@@ -23,9 +23,12 @@ func (h *AssetHandler) GetUserAssets(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
 		return
 	}
-
+	// no need use c.Request.Context() here, because gin.Context already has a context
+	// but still good
 	folders, notes, err := h.assetService.GetUserAssets(c.Request.Context(), userID)
 	if err != nil {
+		// use custom error handling
+		// avoid hardcoding error messages
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user assets"})
 		return
 	}

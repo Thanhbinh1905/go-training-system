@@ -16,6 +16,7 @@ const (
 )
 
 // Folder represents a folder that contains notes
+// consider use pointer
 type Folder struct {
 	ID          uuid.UUID      `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
 	Name        string         `json:"name" gorm:"not null"`

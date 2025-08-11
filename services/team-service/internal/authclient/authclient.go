@@ -36,7 +36,6 @@ type AuthServiceClient struct {
 }
 
 func NewAuthServiceClient(authServiceURL string) *AuthServiceClient {
-
 	return &AuthServiceClient{
 		client: graphql.NewClient(authServiceURL),
 	}

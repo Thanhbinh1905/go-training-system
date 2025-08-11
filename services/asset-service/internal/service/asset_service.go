@@ -35,6 +35,7 @@ func NewAssetService(
 	}
 }
 
+// use pointer
 func (s *assetService) GetUserAssets(ctx context.Context, userID uuid.UUID) ([]model.Folder, []model.Note, error) {
 	ownedFolders, err := s.folderRepo.GetOwnedFolders(ctx, userID)
 	if err != nil {

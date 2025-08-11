@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+// pkg move to shared
 // NewLogger tạo một logger mới với file log chỉ định và service name để tag vào log.
 func NewLogger(logFilePath string, serviceName string) *zap.Logger {
 	encoder := zapcore.NewJSONEncoder(zapcore.EncoderConfig{

@@ -7,6 +7,7 @@ import (
 
 func RunMigrations(db *gorm.DB) error {
 	return db.AutoMigrate(
+		// good
 		&model.User{},
 		&model.Team{},
 		&model.TeamMember{},

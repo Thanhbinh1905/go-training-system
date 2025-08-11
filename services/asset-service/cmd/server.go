@@ -27,6 +27,7 @@ func main() {
 		log.Error("failed to connect to database", zap.Error(err))
 		return
 	}
+	// good
 	defer db.Close(conn)
 
 	r := gin.Default()
@@ -35,6 +36,7 @@ func main() {
 	folderService := service.NewFolderService(folderRepo)
 	folderHandler := handler.NewFolderHandler(folderService)
 
+	// use route grouping for better organization
 	r.POST("/folders", folderHandler.CreateFolder)
 	r.GET("/folders/:folderId", folderHandler.GetFolder)
 	r.PUT("/folders/:folderId", folderHandler.UpdateFolder)

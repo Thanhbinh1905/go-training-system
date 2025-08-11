@@ -9,6 +9,7 @@ import (
 	"github.com/machinebox/graphql"
 )
 
+// good
 const verifyRequest string = `
 		query VerifyToken($input: TokenInput!) {
 			verifyToken(input: $input) {

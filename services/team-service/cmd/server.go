@@ -58,5 +58,6 @@ func main() {
 	r.DELETE("/teams/:teamID/members/:memberID", teamHandler.RemoveMember)
 
 	log.Info("Starting server on port " + "8080")
+	// add graceful shutdown
 	r.Run()
 }
