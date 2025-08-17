@@ -50,8 +50,8 @@ func AuthMiddleware(userClient userpb.UserServiceClient, allowedRoles ...userpb.
 			}
 		}
 
-		ctx := context.WithValue(c.Request.Context(), contextkey.CtxUserIDKey(), userID)
-		ctx = context.WithValue(ctx, contextkey.CtxUserRoleKey(), role)
+		ctx := context.WithValue(c.Request.Context(), contextkey.UserIDKey(), userID)
+		ctx = context.WithValue(ctx, contextkey.UserRoleKey(), role)
 		c.Request = c.Request.WithContext(ctx)
 
 		c.Next()

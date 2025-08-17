@@ -3,8 +3,9 @@ package handler
 import (
 	"net/http"
 
-	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/model"
+	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/dto"
 	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/service"
+	ctxKey "github.com/Thanhbinh1905/go-training-system/shared/contextkey"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -19,43 +20,34 @@ func NewFolderHandler(folderService service.FolderService) *FolderHandler {
 
 // POST /folders
 func (h *FolderHandler) CreateFolder(c *gin.Context) {
-	userID, err := GetUserIDFromContext(c)
+	userID, err := ctxKey.GetUserIDFromContext(c.Request.Context())
 	if err != nil {
 		respondError(c, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
-	var folder model.Folder
-	if err := c.ShouldBindJSON(&folder); err != nil {
+	var input dto.CreateFolderInput
+	if err := c.ShouldBindJSON(&input); err != nil {
 		respondError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	// Set ownerID nếu cần
-	folder.OwnerID = userID
-
-	if err := h.folderService.CreateFolder(c, &folder); err != nil {
+	if err := h.folderService.CreateFolder(c.Request.Context(), userID, &input); err != nil {
 		respondError(c, http.StatusInternalServerError, "failed to create folder")
 		return
 	}
-	c.JSON(http.StatusCreated, folder)
+	c.JSON(http.StatusCreated, input)
 }
 
 // GET /folders/:folderId
 func (h *FolderHandler) GetFolder(c *gin.Context) {
-	_, err := GetUserIDFromContext(c)
-	if err != nil {
-		respondError(c, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
 	id, err := uuid.Parse(c.Param("folderId"))
 	if err != nil {
 		respondError(c, http.StatusBadRequest, "invalid folder id")
 		return
 	}
 
-	folder, err := h.folderService.GetFolder(c, id)
+	folder, err := h.folderService.GetFolderByID(c.Request.Context(), id)
 	if err != nil {
 		respondError(c, http.StatusNotFound, "folder not found")
 		return
@@ -65,28 +57,29 @@ func (h *FolderHandler) GetFolder(c *gin.Context) {
 
 // PUT /folders/:folderId
 func (h *FolderHandler) UpdateFolder(c *gin.Context) {
-	userID, err := GetUserIDFromContext(c)
+	userID, err := ctxKey.GetUserIDFromContext(c.Request.Context())
 	if err != nil {
 		respondError(c, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
-	id, err := uuid.Parse(c.Param("folderId"))
+	folderID, err := uuid.Parse(c.Param("folderId"))
 	if err != nil {
 		respondError(c, http.StatusBadRequest, "invalid folder id")
 		return
 	}
 
-	var updated model.Folder
+	var updated dto.UpdateFolderInput
 	if err := c.ShouldBindJSON(&updated); err != nil {
 		respondError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	updated.ID = id
-	updated.OwnerID = userID
-
-	if err := h.folderService.UpdateFolder(c, &updated); err != nil {
+	if err := h.folderService.UpdateFolder(c.Request.Context(), userID, folderID, &updated); err != nil {
+		if err.Error() == "forbidden: not the owner" {
+			respondError(c, http.StatusForbidden, err.Error())
+			return
+		}
 		respondError(c, http.StatusInternalServerError, "failed to update folder")
 		return
 	}
@@ -95,7 +88,7 @@ func (h *FolderHandler) UpdateFolder(c *gin.Context) {
 
 // DELETE /folders/:folderId
 func (h *FolderHandler) DeleteFolder(c *gin.Context) {
-	_, err := GetUserIDFromContext(c)
+	userID, err := ctxKey.GetUserIDFromContext(c.Request.Context())
 	if err != nil {
 		respondError(c, http.StatusUnauthorized, "unauthorized")
 		return
@@ -107,7 +100,11 @@ func (h *FolderHandler) DeleteFolder(c *gin.Context) {
 		return
 	}
 
-	if err := h.folderService.DeleteFolder(c, id); err != nil {
+	if err := h.folderService.DeleteFolder(c.Request.Context(), userID, id); err != nil {
+		if err.Error() == "forbidden: not the owner" {
+			respondError(c, http.StatusForbidden, err.Error())
+			return
+		}
 		respondError(c, http.StatusInternalServerError, "failed to delete folder")
 		return
 	}

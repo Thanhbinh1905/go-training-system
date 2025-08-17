@@ -1,11 +1,9 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/service"
-	"github.com/Thanhbinh1905/go-training-system/shared/contextkey"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -50,15 +48,6 @@ func (h *AssetHandler) GetTeamAssets(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"folders": folders, "notes": notes})
-}
-
-func GetUserIDFromContext(c *gin.Context) (uuid.UUID, error) {
-	ctx := c.Request.Context()
-	userIDStr, ok := ctx.Value(contextkey.CtxUserIDKey()).(string)
-	if !ok || userIDStr == "" {
-		return uuid.Nil, fmt.Errorf("userID not found in context")
-	}
-	return uuid.Parse(userIDStr)
 }
 
 func respondError(c *gin.Context, status int, msg string) {
