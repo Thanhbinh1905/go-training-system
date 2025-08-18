@@ -49,3 +49,11 @@ func (h *AssetHandler) GetTeamAssets(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"folders": folders, "notes": notes})
 }
+
+func respondError(c *gin.Context, status int, msg string) {
+	c.JSON(status, gin.H{"error": msg})
+}
+
+func respondMessage(c *gin.Context, status int, msg string) {
+	c.JSON(status, gin.H{"message": msg})
+}

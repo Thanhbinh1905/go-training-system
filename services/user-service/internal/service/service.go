@@ -8,8 +8,8 @@ import (
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/dto"
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/model"
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/repository"
-	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/token"
-	"github.com/Thanhbinh1905/go-training-system/services/user-service/pkg/hash"
+	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/util/hash"
+	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/util/token"
 	"github.com/Thanhbinh1905/go-training-system/shared/apperror"
 
 	"github.com/google/uuid"
@@ -22,6 +22,7 @@ type UserService interface {
 	FetchUsers(ctx context.Context, input *dto.UserPaginationInput) (*dto.PaginatedUsersResponse, error)
 	ValidateToken(input *dto.TokenVerifyInput) (*dto.TokenVerifyResponse, error)
 	User(ctx context.Context, userID uuid.UUID) (*dto.UserResponse, error)
+	CheckUserExist(ctx context.Context, userID uuid.UUID) (bool, error)
 }
 
 type userService struct {
@@ -110,6 +111,14 @@ func (s *userService) Login(ctx context.Context, input *dto.LoginInput) (*dto.Au
 
 func (s *userService) Logout(ctx context.Context) {
 	panic(fmt.Errorf("not implemented: Logout"))
+}
+
+func (s *userService) CheckUserExist(ctx context.Context, userID uuid.UUID) (bool, error) {
+	exist, err := s.repo.IsUserExist(ctx, userID)
+	if err != nil {
+		return false, err
+	}
+	return exist, nil
 }
 
 func (s *userService) FetchUsers(ctx context.Context, input *dto.UserPaginationInput) (*dto.PaginatedUsersResponse, error) {

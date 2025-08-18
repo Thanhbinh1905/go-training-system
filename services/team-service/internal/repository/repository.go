@@ -10,10 +10,12 @@ import (
 
 type TeamRepositorty interface {
 	Create(ctx context.Context, team *model.Team) error
-	AddMember(ctx context.Context, added_by uuid.UUID, teamID uuid.UUID, userIDs []uuid.UUID) error
+	AddMember(ctx context.Context, added_by uuid.UUID, teamID uuid.UUID, userID uuid.UUID) error
 	RemoveMember(ctx context.Context, teamID uuid.UUID, userID uuid.UUID) error
-	AddManager(ctx context.Context, added_by uuid.UUID, teamID uuid.UUID, userIDs []uuid.UUID) error
+	AddManager(ctx context.Context, added_by uuid.UUID, teamID uuid.UUID, userID uuid.UUID) error
 	RemoveManager(ctx context.Context, teamID uuid.UUID, userID uuid.UUID) error
+	GetManagerIDsByTeamID(ctx context.Context, teamID uuid.UUID) ([]uuid.UUID, error)
+	GetMemberIDsByTeamID(ctx context.Context, teamID uuid.UUID) ([]uuid.UUID, error)
 }
 
 type teamRepositorty struct {
@@ -27,37 +29,68 @@ func NewTeamRepository(db *gorm.DB) TeamRepositorty {
 func (r *teamRepositorty) Create(ctx context.Context, team *model.Team) error {
 	return r.db.WithContext(ctx).Create(team).Error
 }
-
-func (r *teamRepositorty) AddMember(ctx context.Context, added_by uuid.UUID, teamID uuid.UUID, userIDs []uuid.UUID) error {
-	var members []model.TeamMember
-	for _, uid := range userIDs {
-		members = append(members, model.TeamMember{
-			TeamID:    teamID,
-			UserID:    uid,
-			AddedByID: added_by,
-		})
+func (r *teamRepositorty) AddMember(ctx context.Context, added_by uuid.UUID, teamID uuid.UUID, userID uuid.UUID) error {
+	member := model.TeamMember{
+		TeamID:    teamID,
+		UserID:    userID,
+		AddedByID: added_by,
 	}
-
-	return r.db.WithContext(ctx).Create(&members).Error
+	return r.db.WithContext(ctx).Create(&member).Error
 }
 
 func (r *teamRepositorty) RemoveMember(ctx context.Context, teamID uuid.UUID, userID uuid.UUID) error {
 	return r.db.WithContext(ctx).Where("team_id = ? AND user_id = ?", teamID, userID).Delete(&model.TeamMember{}).Error
 }
 
-func (r *teamRepositorty) AddManager(ctx context.Context, added_by uuid.UUID, teamID uuid.UUID, userIDs []uuid.UUID) error {
-	var managers []model.TeamManager
-	for _, uid := range userIDs {
-		managers = append(managers, model.TeamManager{
-			TeamID:    teamID,
-			UserID:    uid,
-			AddedByID: added_by,
-		})
+func (r *teamRepositorty) AddManager(ctx context.Context, added_by uuid.UUID, teamID uuid.UUID, userID uuid.UUID) error {
+	manager := model.TeamManager{
+		TeamID:    teamID,
+		UserID:    userID,
+		AddedByID: added_by,
 	}
-
-	return r.db.WithContext(ctx).Create(&managers).Error
+	return r.db.WithContext(ctx).Create(&manager).Error
 }
 
 func (r *teamRepositorty) RemoveManager(ctx context.Context, teamID uuid.UUID, userID uuid.UUID) error {
 	return r.db.WithContext(ctx).Where("team_id = ? AND user_id = ?", teamID, userID).Delete(&model.TeamManager{}).Error
+}
+
+func (r *teamRepositorty) GetManagersByTeamID(ctx context.Context, teamID uuid.UUID) ([]*model.TeamManager, error) {
+	var manager []*model.TeamManager
+	err := r.db.WithContext(ctx).Where("team_id = ?", teamID).Find(&manager).Error
+	if err != nil {
+		return nil, err
+	}
+	return manager, nil
+}
+
+func (r *teamRepositorty) GetManagerIDsByTeamID(ctx context.Context, teamID uuid.UUID) ([]uuid.UUID, error) {
+	var managerIDs []uuid.UUID
+	err := r.db.WithContext(ctx).Model(&model.TeamManager{}).
+		Where("team_id = ?", teamID).
+		Pluck("user_id", &managerIDs).Error
+	if err != nil {
+		return nil, err
+	}
+	return managerIDs, nil
+}
+
+func (r *teamRepositorty) GetMembersByTeamID(ctx context.Context, teamID uuid.UUID) ([]*model.TeamMember, error) {
+	var member []*model.TeamMember
+	err := r.db.WithContext(ctx).Where("team_id = ?", teamID).Find(&member).Error
+	if err != nil {
+		return nil, err
+	}
+	return member, nil
+}
+
+func (r *teamRepositorty) GetMemberIDsByTeamID(ctx context.Context, teamID uuid.UUID) ([]uuid.UUID, error) {
+	var memberIDs []uuid.UUID
+	err := r.db.WithContext(ctx).Model(&model.TeamMember{}).
+		Where("team_id = ?", teamID).
+		Pluck("user_id", &memberIDs).Error
+	if err != nil {
+		return nil, err
+	}
+	return memberIDs, nil
 }

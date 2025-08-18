@@ -14,6 +14,7 @@ type UserRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*model.User, error)
 	FindByEmail(ctx context.Context, email string) (*model.User, error)
 	Fetch(ctx context.Context, role *model.UserRole, limit, offset int32) (*model.PaginatedUsers, error)
+	IsUserExist(ctx context.Context, userID uuid.UUID) (bool, error)
 }
 
 type userRepository struct {
@@ -31,6 +32,12 @@ func (r *userRepository) Create(ctx context.Context, user *model.User) error {
 func (r *userRepository) IsEmailTaken(ctx context.Context, email string) (bool, error) {
 	var count int64
 	err := r.db.WithContext(ctx).Model(&model.User{}).Where("email = ?", email).Count(&count).Error
+	return count > 0, err
+}
+
+func (r *userRepository) IsUserExist(ctx context.Context, userID uuid.UUID) (bool, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&model.User{}).Where("id = ?", userID).Count(&count).Error
 	return count > 0, err
 }
 

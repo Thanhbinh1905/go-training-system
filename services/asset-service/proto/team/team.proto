@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package team;
+
+option go_package = "github.com/Thanhbinh1905/go-training-system/services/team-service/pb/team";
+
+message BaseResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+service TeamService {
+    rpc GetTeam(GetTeamRequest) returns (GetTeamResponse);
+    rpc IsTeamExist(GetTeamRequest) returns (IsTeamExistResponse);
+    rpc GetUserIDsByTeamID(GetUserIDsByTeamIDRequest) returns (GetUserIDsByTeamIDResponse);
+    rpc GetManagersByTeamID(GetUserIDsByTeamIDRequest) returns (GetManagersByTeamIDResponse);
+    rpc GetMembersByTeamID(GetUserIDsByTeamIDRequest) returns (GetMembersByTeamIDResponse);
+}
+
+message GetTeamRequest {
+    string team_id = 1;
+}
+
+message Team {
+    string team_id = 1;
+    string name = 2;
+    string created_at = 3;
+}
+
+message GetTeamResponse {
+    BaseResponse base = 1;
+    Team team = 2;
+}
+
+message IsTeamExistResponse {
+    BaseResponse base = 1;
+    bool is_exist = 2;
+}
+
+message GetUserIDsByTeamIDRequest {
+  string team_id = 1;
+}
+
+message GetUserIDsByTeamIDResponse {
+  BaseResponse base = 1;
+  repeated string manager_ids = 2; // Danh sách user_id của manager
+  repeated string member_ids = 3; // Danh sách user_id của member
+}
+
+message GetManagersByTeamIDResponse {
+  BaseResponse base = 1;
+  repeated string manager_ids = 2; // Danh sách user_id của manager
+}
+
+message GetMembersByTeamIDResponse {
+  BaseResponse base = 1;
+  repeated string member_ids = 2; // Danh sách user_id của member
+}

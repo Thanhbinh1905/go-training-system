@@ -7,10 +7,15 @@ import (
 	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/handler"
 	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/repository"
 	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/service"
-	"github.com/Thanhbinh1905/go-training-system/services/asset-service/pkg/logger"
 	"github.com/Thanhbinh1905/go-training-system/shared/db"
+	"github.com/Thanhbinh1905/go-training-system/shared/logger"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+)
+
+const (
+	userGRPCURL = "user-service:50051"
+	TeamGRPCURL = "team-service:50052"
 )
 
 func main() {
@@ -19,15 +24,15 @@ func main() {
 		log.Fatal("failed to Load config")
 	}
 
-	log := logger.NewLogger("logs/team-service.log", "team-service")
-	defer log.Sync() // flush
+	log := logger.InitLogger("logs/asset-service.log", "asset-service")
+	defer log.Sync()
 
-	conn, err := db.Connect(cfg.DatabaseURL)
+	conn, err := db.Connect(cfg.DatabaseURL, log)
 	if err != nil {
 		log.Error("failed to connect to database", zap.Error(err))
 		return
 	}
-	defer db.Close(conn)
+	defer db.Close(conn, log)
 
 	r := gin.Default()
 
