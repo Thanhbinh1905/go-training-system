@@ -20,7 +20,6 @@ type assetService struct {
 	noteRepo        repository.NoteRepository
 	folderShareRepo repository.FolderShareRepository
 	noteShareRepo   repository.NoteShareRepository
-	userFetcher     func(ctx context.Context, teamID uuid.UUID) ([]uuid.UUID, error) // dùng gRPC or REST
 }
 
 func NewAssetService(
@@ -28,10 +27,9 @@ func NewAssetService(
 	noteRepo repository.NoteRepository,
 	folderShareRepo repository.FolderShareRepository,
 	noteShareRepo repository.NoteShareRepository,
-	userFetcher func(context.Context, uuid.UUID) ([]uuid.UUID, error),
 ) AssetService {
 	return &assetService{
-		folderRepo, noteRepo, folderShareRepo, noteShareRepo, userFetcher,
+		folderRepo, noteRepo, folderShareRepo, noteShareRepo,
 	}
 }
 

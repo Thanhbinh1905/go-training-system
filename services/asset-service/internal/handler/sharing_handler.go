@@ -3,8 +3,9 @@ package handler
 import (
 	"net/http"
 
-	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/model"
+	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/dto"
 	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/service"
+	ctxKey "github.com/Thanhbinh1905/go-training-system/shared/contextkey"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -19,20 +20,25 @@ func NewSharingHandler(sharingService service.SharingService) *SharingHandler {
 
 // POST /folders/:folderId/share
 func (h *SharingHandler) ShareFolder(c *gin.Context) {
+	userID, err := ctxKey.GetUserIDFromContext(c.Request.Context())
+	if err != nil {
+		respondError(c, http.StatusUnauthorized, "unauthorized")
+		return
+	}
 	folderID, err := uuid.Parse(c.Param("folderId"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid folder ID"})
 		return
 	}
 
-	var share model.FolderShare
+	var share dto.CreateFolderShareInput
 	if err := c.ShouldBindJSON(&share); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	share.FolderID = folderID
-	if err := h.sharingService.ShareFolder(c.Request.Context(), &share); err != nil {
+	if err := h.sharingService.ShareFolder(c.Request.Context(), userID, &share); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to share folder"})
 		return
 	}
@@ -61,20 +67,26 @@ func (h *SharingHandler) RevokeFolderShare(c *gin.Context) {
 
 // POST /notes/:noteId/share
 func (h *SharingHandler) ShareNote(c *gin.Context) {
+	userID, err := ctxKey.GetUserIDFromContext(c.Request.Context())
+	if err != nil {
+		respondError(c, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
 	noteID, err := uuid.Parse(c.Param("noteId"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid note ID"})
 		return
 	}
 
-	var share model.NoteShare
+	var share dto.CreateNoteShareInput
 	if err := c.ShouldBindJSON(&share); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	share.NoteID = noteID
-	if err := h.sharingService.ShareNote(c.Request.Context(), &share); err != nil {
+	if err := h.sharingService.ShareNote(c.Request.Context(), userID, &share); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to share note"})
 		return
 	}
