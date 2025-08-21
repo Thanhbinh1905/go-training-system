@@ -16,6 +16,8 @@ type TeamRepositorty interface {
 	RemoveManager(ctx context.Context, teamID uuid.UUID, userID uuid.UUID) error
 	GetManagerIDsByTeamID(ctx context.Context, teamID uuid.UUID) ([]uuid.UUID, error)
 	GetMemberIDsByTeamID(ctx context.Context, teamID uuid.UUID) ([]uuid.UUID, error)
+
+	IsUserTeamManager(ctx context.Context, userID, teamID uuid.UUID) (bool, error)
 }
 
 type teamRepositorty struct {
@@ -93,4 +95,19 @@ func (r *teamRepositorty) GetMemberIDsByTeamID(ctx context.Context, teamID uuid.
 		return nil, err
 	}
 	return memberIDs, nil
+}
+
+func (r *teamRepositorty) IsUserTeamManager(ctx context.Context, userID, teamID uuid.UUID) (bool, error) {
+	var count int64
+
+	err := r.db.WithContext(ctx).
+		Model(&model.TeamManager{}).
+		Where("team_id = ? AND user_id = ?", teamID, userID).
+		Count(&count).Error
+
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
 }

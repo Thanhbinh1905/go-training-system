@@ -23,6 +23,8 @@ type TeamService interface {
 	GetManagersByTeamID(ctx context.Context, teamID uuid.UUID) ([]*dto.TeamManagerResponse, error)
 	GetMembersByTeamID(ctx context.Context, teamID uuid.UUID) ([]*dto.TeamMemberResponse, error)
 	GetUsersByTeamID(ctx context.Context, teamID uuid.UUID) (*dto.TeamUsersResponse, error)
+
+	IsUserTeamManager(ctx context.Context, userID, teamID uuid.UUID) (bool, error)
 }
 
 type teamService struct {
@@ -187,4 +189,8 @@ func (s *teamService) GetUsersByTeamID(ctx context.Context, teamID uuid.UUID) (*
 		Managers: managers,
 		Members:  members,
 	}, nil
+}
+
+func (s *teamService) IsUserTeamManager(ctx context.Context, userID, teamID uuid.UUID) (bool, error) {
+	return s.repo.IsUserTeamManager(ctx, userID, teamID)
 }

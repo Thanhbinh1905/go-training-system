@@ -19,6 +19,8 @@ service TeamService {
     // (Tuỳ chọn) Tách riêng member/manager nếu cần
     rpc GetManagersByTeamID(GetUserIDsByTeamIDRequest) returns (GetManagersByTeamIDResponse);
     rpc GetMembersByTeamID(GetUserIDsByTeamIDRequest) returns (GetMembersByTeamIDResponse);
+
+    rpc IsUserTeamManager(IsUserTeamManagerRequest) returns (IsUserTeamManagerResponse);
 }
 
 message GetTeamRequest {
@@ -59,4 +61,14 @@ message GetManagersByTeamIDResponse {
 message GetMembersByTeamIDResponse {
   BaseResponse base = 1;
   repeated string member_ids = 2; // Danh sách user_id của member
+}
+
+message IsUserTeamManagerRequest {
+  string userID = 1;
+  string teamID = 2;
+}
+
+message IsUserTeamManagerResponse {
+  BaseResponse base = 1;
+  bool isManager = 2;
 }

@@ -11,6 +11,8 @@ import (
 	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/model"
 	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/repository"
 	"github.com/google/uuid"
+
+	teampb "github.com/Thanhbinh1905/go-training-system/services/asset-service/pb/team"
 )
 
 // Permission actions
@@ -23,7 +25,11 @@ const (
 )
 
 var (
-	ErrPermissionDenied = errors.New("permission denied")
+	ErrPermissionDenied   = errors.New("permission denied")
+	ErrTeamNotFound       = errors.New("teamID not found")
+	ErrCheckManagerFailed = errors.New("Can not check user permission")
+	ErrForbidden          = errors.New("Forbidden")
+	ErrGetTeamUsersFailed = errors.New("Failed to get users from teamId")
 )
 
 type AssetService interface {
@@ -351,9 +357,84 @@ func (s *assetService) RevokeNoteShare(ctx context.Context, noteID, userID uuid.
 
 // -------------------- Manage Team Asset --------------------
 
+func (s *assetService) isUserTeamManager(managerIDs []string, userID uuid.UUID) bool {
+	for _, id := range managerIDs {
+		if id == userID.String() {
+			return true
+		}
+	}
+	return false
+}
+
+// func (s *assetService) GetFolderByID(ctx context.Context, userID, folderID uuid.UUID) (*dto.FolderBlock, error) {
+// 	folder, err := s.assetRepo.GetFolderByID(ctx, folderID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	// Check folder permission
+// 	folderPerm, err := s.checkFolderPermission(ctx, userID, folder)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	if folderPerm == model.AccessLevelNone {
+// 		return nil, ErrPermissionDenied
+// 	}
+
+// 	notes, err := s.getNotesByFolderID(ctx, userID, folderID, folderPerm)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("get notes: %w", err)
+// 	}
+
+// 	res := &dto.FolderBlock{
+// 		Folder:     *folder,
+// 		Permission: folderPerm,
+// 		Notes:      notes,
+// 	}
+// 	return res, nil
+// }
+
+func (s *assetService) GetAllAssetsInTeam(ctx context.Context, teamUsers *teampb.GetUserIDsByTeamIDResponse) ([]*dto.UserAssetsBlock, error) {
+	var assets []*dto.UserAssetsBlock
+
+	perm := model.AccessLevelRead
+
+	for _, manager := range teamUsers.ManagerIds {
+
+	}
+
+}
+
 // GET	/teams/:teamId/assets	View all assets that team members own or can access
 func (s *assetService) GetTeamAssets(ctx context.Context, userID, teamID uuid.UUID) (*dto.TeamAssetsResponse, error) {
+	// 1. Check team exist
+	teamResp, err := s.teamClient.Client.IsTeamExist(ctx, &teampb.GetTeamRequest{TeamId: teamID.String()})
+	if err != nil || !teamResp.Base.Success || !teamResp.IsExist {
+		return nil, ErrTeamNotFound
+	}
 
+	// 2. Get UserIDs from teamID
+	teamUsers, err := s.teamClient.Client.GetUserIDsByTeamID(ctx, &teampb.GetUserIDsByTeamIDRequest{TeamId: teamID.String()})
+	if err != nil {
+		return nil, ErrGetTeamUsersFailed
+	}
+
+	isManager := s.isUserTeamManager(teamUsers.ManagerIds, userID)
+
+	// 3. Logic based on role
+	var assets []*dto.UserAssetsBlock
+	if isManager {
+		// assets, err = s.assetRepo.GetAllAssetsByTeamID(ctx, teamID)
+	} else {
+		// assets, err = s.assetRepo.GetPermittedAssetsByUserID(ctx, userID, teamID)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.TeamAssetsResponse{
+		Assets: assets,
+	}, nil
 }
 
 // GET	/users/:userId/assets	View all assets owned by or shared with user
