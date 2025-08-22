@@ -101,7 +101,7 @@ services:
       dockerfile: services/asset-service/Dockerfile
     container_name: asset-service
     ports:
-      - "8082:8080"
+      - "8083:8080"
     depends_on:
       - asset-db
       - user-service
@@ -111,7 +111,6 @@ services:
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@asset-db:5432/asset?sslmode=disable
       PRODUCTION: ${PRODUCTION}
-      GRPC_PORT: 50052
     networks:
       - backend-net
   # ================= MONITORING =================
