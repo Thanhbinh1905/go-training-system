@@ -10,6 +10,7 @@ import (
 	httpHandler "github.com/Thanhbinh1905/go-training-system/services/user-service/internal/handler/http"
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/util/token"
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/pb"
+	"github.com/Thanhbinh1905/go-training-system/shared/db/postgres"
 	"github.com/Thanhbinh1905/go-training-system/shared/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -23,7 +24,6 @@ import (
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/config"
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/repository"
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/service"
-	"github.com/Thanhbinh1905/go-training-system/shared/db"
 	"google.golang.org/grpc"
 
 	grpcHandler "github.com/Thanhbinh1905/go-training-system/services/user-service/internal/handler/grpc"
@@ -113,11 +113,11 @@ func Run(cfg *config.Config) {
 	defer log.Sync()
 
 	// DB connection
-	conn, err := db.Connect(cfg.DatabaseURL, log)
+	conn, err := postgres.Connect(cfg.DatabaseURL, log)
 	if err != nil {
 		log.Fatal("DB connection failed", zap.Error(err))
 	}
-	defer db.Close(conn, log)
+	defer postgres.Close(conn, log)
 
 	// Init dependencies
 	userRepo := repository.NewUserRepository(conn)

@@ -2,3 +2,7 @@ logs/
 *.log
 token.json
 **/tmp/
+
+services/asset-service/asset-service
+services/team-service/team-service
+services/user-service/user-service

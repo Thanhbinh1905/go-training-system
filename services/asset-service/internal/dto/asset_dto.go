@@ -27,15 +27,13 @@ type UpdateNoteInput struct {
 }
 
 type CreateFolderShareInput struct {
-	FolderID uuid.UUID
-	UserIDs  []uuid.UUID
-	Access   *model.AccessLevel
+	UserIDs []uuid.UUID        `json:"user_ids"`
+	Access  *model.AccessLevel `json:"access_level"`
 }
 
 type CreateNoteShareInput struct {
-	NoteID  uuid.UUID
-	UserIDs []uuid.UUID
-	Access  *model.AccessLevel
+	UserIDs []uuid.UUID        `json:"user_ids"`
+	Access  *model.AccessLevel `json:"access_level"`
 }
 
 type TeamAssetsResponse struct {

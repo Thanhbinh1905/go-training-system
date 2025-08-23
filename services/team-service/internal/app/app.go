@@ -12,7 +12,8 @@ import (
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/service"
 	teampb "github.com/Thanhbinh1905/go-training-system/services/team-service/pb/team"
 	userpb "github.com/Thanhbinh1905/go-training-system/services/team-service/pb/user"
-	"github.com/Thanhbinh1905/go-training-system/shared/db"
+	"github.com/Thanhbinh1905/go-training-system/shared/db/postgres"
+	"github.com/Thanhbinh1905/go-training-system/shared/db/redis"
 	"github.com/Thanhbinh1905/go-training-system/shared/logger"
 
 	"net"
@@ -30,13 +31,22 @@ func Run(cfg *config.Config) {
 	log := logger.InitLogger("logs/team-service.log", "team-service")
 	defer log.Sync()
 
-	conn, err := db.Connect(cfg.DatabaseURL, log)
+	conn, err := postgres.Connect(cfg.DatabaseURL, log)
 	if err != nil {
 		log.Fatal("failed to connect to database", zap.Error(err))
 	}
-	defer db.Close(conn, log)
+	defer postgres.Close(conn, log)
 
-	teamRepo := repository.NewTeamRepository(conn)
+	redisClient, err := redis.Init(cfg.RedisAddr, cfg.RedisPassword, cfg.RedisDB, log)
+	if err != nil {
+		log.Fatal("failed to init redis:", zap.Error(err))
+	}
+	defer redisClient.Close(log)
+
+	teamDBRepo := repository.NewTeamDbRepository(conn)
+	teamCacheRepo := repository.NewTeamCache(redisClient.Client)
+
+	teamRepo := repository.NewTeamRepository(teamDBRepo, teamCacheRepo)
 	userClient := client.NewUserGRPCClient(userGRPCURL)
 	teamService := service.NewTeamService(teamRepo, *userClient)
 

@@ -24,6 +24,7 @@ func AuthMiddleware(userClient userpb.UserServiceClient, allowedRoles ...userpb.
 		resp, err := userClient.VerifyAccessToken(c, &userpb.VerifyTokenRequest{AccessToken: token})
 		if err != nil || !resp.IsValid {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+			// c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token: " + token})
 			return
 		}
 

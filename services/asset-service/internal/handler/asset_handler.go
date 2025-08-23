@@ -228,7 +228,6 @@ func (h *AssetHandler) ShareFolder(c *gin.Context) {
 		httpresponse.RespondError(c, err)
 		return
 	}
-	input.FolderID = folderID
 
 	userID, err := ctxKey.GetUserIDFromContext(c.Request.Context())
 	if err != nil {
@@ -236,7 +235,7 @@ func (h *AssetHandler) ShareFolder(c *gin.Context) {
 		return
 	}
 
-	if err := h.assetService.ShareFolder(c.Request.Context(), userID, &input); err != nil {
+	if err := h.assetService.ShareFolder(c.Request.Context(), userID, folderID, &input); err != nil {
 		httpresponse.RespondError(c, err)
 		return
 	}
@@ -257,7 +256,6 @@ func (h *AssetHandler) ShareNote(c *gin.Context) {
 		httpresponse.RespondError(c, err)
 		return
 	}
-	input.NoteID = noteID
 
 	userID, err := ctxKey.GetUserIDFromContext(c.Request.Context())
 	if err != nil {
@@ -265,7 +263,7 @@ func (h *AssetHandler) ShareNote(c *gin.Context) {
 		return
 	}
 
-	if err := h.assetService.ShareNote(c.Request.Context(), userID, &input); err != nil {
+	if err := h.assetService.ShareNote(c.Request.Context(), userID, noteID, &input); err != nil {
 		httpresponse.RespondError(c, err)
 		return
 	}

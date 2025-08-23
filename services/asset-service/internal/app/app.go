@@ -9,7 +9,8 @@ import (
 	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/middleware"
 	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/repository"
 	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/service"
-	"github.com/Thanhbinh1905/go-training-system/shared/db"
+	"github.com/Thanhbinh1905/go-training-system/shared/db/postgres"
+	"github.com/Thanhbinh1905/go-training-system/shared/db/redis"
 	"github.com/Thanhbinh1905/go-training-system/shared/logger"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -21,35 +22,40 @@ import (
 const (
 	userGRPCURL = "user-service:50051"
 	teamGRPCURL = "team-service:50052"
+	redisTTL    = 10 * time.Minute
 )
 
 func Run(cfg *config.Config) {
 	log := logger.InitLogger("logs/asset-service.log", "asset-service")
 	defer log.Sync()
 
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		log.Fatal("failed to Load config")
-	}
-
-	conn, err := db.Connect(cfg.DatabaseURL, log)
+	conn, err := postgres.Connect(cfg.DatabaseURL, log)
 	if err != nil {
 		log.Error("failed to connect to database", zap.Error(err))
 		return
 	}
-	defer db.Close(conn, log)
+	defer postgres.Close(conn, log)
 
-	assetRepo := repository.NewAssetRepo(conn)
+	redisClient, err := redis.Init(cfg.RedisAddr, cfg.RedisPassword, cfg.RedisDB, log)
+	if err != nil {
+		log.Fatal("failed to init redis:", zap.Error(err))
+	}
+	defer redisClient.Close(log)
+
+	assetDBRepo := repository.NewAssetDBRepo(conn)
+	assetCacheRepo := repository.NewAssetCache(redisClient.Client, redisTTL)
+
+	assetRepo := repository.NewCachedAssetRepo(assetDBRepo, assetCacheRepo)
 
 	userClient := client.NewUserGRPCClient(userGRPCURL)
 	teamClient := client.NewTeamGRPCClient(teamGRPCURL)
 
 	assetSvc := service.NewAssetService(assetRepo, *userClient, *teamClient)
 
-	runHTTPServer(assetSvc, *userClient, *teamClient, log)
+	runHTTPServer(assetSvc, *userClient, log)
 }
 
-func runHTTPServer(assetService service.AssetService, userClient client.UserGRPCClient, teamClient client.TeamGRPCClient, log *zap.Logger) {
+func runHTTPServer(assetService service.AssetService, userClient client.UserGRPCClient, log *zap.Logger) {
 	r := gin.Default()
 	r.Use(ginzap.Ginzap(log, time.RFC3339, true))
 	r.Use(ginzap.RecoveryWithZap(log, true))

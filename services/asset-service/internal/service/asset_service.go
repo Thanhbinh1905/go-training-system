@@ -41,8 +41,8 @@ type AssetService interface {
 	UpdateNote(ctx context.Context, userID, noteID uuid.UUID, input *dto.UpdateNoteInput) error
 	DeleteNote(ctx context.Context, userID, noteID uuid.UUID) error
 
-	ShareFolder(ctx context.Context, userID uuid.UUID, input *dto.CreateFolderShareInput) error
-	ShareNote(ctx context.Context, userID uuid.UUID, input *dto.CreateNoteShareInput) error
+	ShareFolder(ctx context.Context, userID, folderID uuid.UUID, input *dto.CreateFolderShareInput) error
+	ShareNote(ctx context.Context, userID, noteID uuid.UUID, input *dto.CreateNoteShareInput) error
 	RevokeFolderShare(ctx context.Context, folderID, userID uuid.UUID) error
 	RevokeNoteShare(ctx context.Context, noteID, userID uuid.UUID) error
 
@@ -346,20 +346,20 @@ func (s *assetService) getNotesByFolderID(ctx context.Context, userID, folderID 
 
 // -------------------- Sharing --------------------
 
-func (s *assetService) ShareFolder(ctx context.Context, userID uuid.UUID, input *dto.CreateFolderShareInput) error {
+func (s *assetService) ShareFolder(ctx context.Context, userID, folderID uuid.UUID, input *dto.CreateFolderShareInput) error {
 	access := model.AccessLevelRead
 	if input.Access != nil {
 		access = *input.Access
 	}
-	return s.assetRepo.ShareFolder(ctx, input.FolderID, userID, input.UserIDs, access)
+	return s.assetRepo.ShareFolder(ctx, folderID, userID, input.UserIDs, access)
 }
 
-func (s *assetService) ShareNote(ctx context.Context, userID uuid.UUID, input *dto.CreateNoteShareInput) error {
+func (s *assetService) ShareNote(ctx context.Context, userID, noteID uuid.UUID, input *dto.CreateNoteShareInput) error {
 	access := model.AccessLevelRead
 	if input.Access != nil {
 		access = *input.Access
 	}
-	return s.assetRepo.ShareNote(ctx, input.NoteID, userID, input.UserIDs, access)
+	return s.assetRepo.ShareNote(ctx, noteID, userID, input.UserIDs, access)
 }
 
 func (s *assetService) RevokeFolderShare(ctx context.Context, folderID, userID uuid.UUID) error {

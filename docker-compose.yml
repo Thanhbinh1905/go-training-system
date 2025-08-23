@@ -1,6 +1,17 @@
 
 services:
   # ================= DATABASES =================
+  redis:
+    image: redis:7.2
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    networks:
+      - backend-net
+
   user-db:
     image: postgres:13.21-alpine3.21
     container_name: user-db
@@ -40,6 +51,7 @@ services:
       - backend-net
     volumes:
       - asset-data:/var/lib/postgresql/data
+      
   # ================= SERVICES =================
   migrate:
     build:
@@ -66,6 +78,7 @@ services:
       - "8081:8080"
     depends_on:
       - user-db
+      - redis
     volumes:
       - .:/app
     environment:
@@ -73,6 +86,10 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       PRODUCTION: ${PRODUCTION}
       GRPC_PORT: 50051
+
+      REDIS_ADDR: redis:6379
+      REDIS_PASSWORD: ""
+      REDIS_DB: 0
     networks:
       - backend-net
       
@@ -86,6 +103,7 @@ services:
     depends_on:
       - team-db
       - user-service
+      - redis
     volumes:
       - .:/app
       - ./services/team-service/logs:/app/logs
@@ -93,6 +111,11 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@team-db:5432/team?sslmode=disable
       PRODUCTION: ${PRODUCTION}
       GRPC_PORT: 50052
+
+      REDIS_ADDR: redis:6379
+      REDIS_PASSWORD: ""
+      REDIS_DB: 0
+      USER_SERVICE_GRPC_PORT: user-service:50051
     networks:
       - backend-net
   asset-service:
@@ -105,12 +128,20 @@ services:
     depends_on:
       - asset-db
       - user-service
+      - team-service
+      - redis
     volumes:
       - .:/app
       - ./services/asset-service/logs:/app/logs
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@asset-db:5432/asset?sslmode=disable
       PRODUCTION: ${PRODUCTION}
+
+      REDIS_ADDR: redis:6379
+      REDIS_PASSWORD: ""
+      REDIS_DB: 0
+      USER_SERVICE_GRPC_PORT: user-service:50051
+      TEAM_SERVICE_GRPC_PORT: team-service:50052
     networks:
       - backend-net
   # ================= MONITORING =================
@@ -128,6 +159,9 @@ services:
     container_name: promtail
     volumes:
       - ./services/team-service/logs:/var/log/team-service
+      - ./services/asset-service/logs:/var/log/asset-service
+      - ./services/user-service/logs:/var/log/user-service
+
       - ./promtail-config.yml:/etc/promtail/promtail-config.yml
     command: -config.file=/etc/promtail/promtail-config.yml
     depends_on:
@@ -170,6 +204,7 @@ volumes:
   user-data:
   team-data:
   asset-data:
+  redis-data:
 
 networks:
   backend-net:

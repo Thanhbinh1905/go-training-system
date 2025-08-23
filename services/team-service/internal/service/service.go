@@ -25,14 +25,16 @@ type TeamService interface {
 	GetUsersByTeamID(ctx context.Context, teamID uuid.UUID) (*dto.TeamUsersResponse, error)
 
 	IsUserTeamManager(ctx context.Context, userID, teamID uuid.UUID) (bool, error)
+
+	IsTeamExist(ctx context.Context, teamID uuid.UUID) (bool, error)
 }
 
 type teamService struct {
-	repo       repository.TeamRepositorty
+	repo       repository.TeamRepository
 	userClient client.UserGRPCClient
 }
 
-func NewTeamService(repo repository.TeamRepositorty, userClient client.UserGRPCClient) TeamService {
+func NewTeamService(repo repository.TeamRepository, userClient client.UserGRPCClient) TeamService {
 	return &teamService{
 		repo:       repo,
 		userClient: userClient,
@@ -193,4 +195,8 @@ func (s *teamService) GetUsersByTeamID(ctx context.Context, teamID uuid.UUID) (*
 
 func (s *teamService) IsUserTeamManager(ctx context.Context, userID, teamID uuid.UUID) (bool, error) {
 	return s.repo.IsUserTeamManager(ctx, userID, teamID)
+}
+
+func (s *teamService) IsTeamExist(ctx context.Context, teamID uuid.UUID) (bool, error) {
+	return s.repo.IsTeamExist(ctx, teamID)
 }
