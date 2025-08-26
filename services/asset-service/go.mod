@@ -7,6 +7,7 @@ require (
 	github.com/gin-gonic/gin v1.10.1
 	github.com/google/uuid v1.6.0
 	github.com/machinebox/graphql v0.2.2
+	github.com/segmentio/kafka-go v0.4.47
 	github.com/spf13/viper v1.20.1
 	go.uber.org/zap v1.27.0
 	gorm.io/gorm v1.30.1

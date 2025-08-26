@@ -3,6 +3,7 @@ module github.com/Thanhbinh1905/go-training-system/shared
 go 1.24.3
 
 require (
+	github.com/segmentio/kafka-go v0.4.47
 	go.uber.org/zap v1.27.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gorm.io/driver/postgres v1.6.0

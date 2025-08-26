@@ -11,6 +11,7 @@ import (
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/repository"
 	userpb "github.com/Thanhbinh1905/go-training-system/services/team-service/pb/user"
 	"github.com/Thanhbinh1905/go-training-system/shared/contextkey"
+	"github.com/Thanhbinh1905/go-training-system/shared/kafka"
 	"github.com/google/uuid"
 )
 
@@ -32,12 +33,14 @@ type TeamService interface {
 type teamService struct {
 	repo       repository.TeamRepository
 	userClient client.UserGRPCClient
+	kafkaProducer kafka.Producer
 }
 
-func NewTeamService(repo repository.TeamRepository, userClient client.UserGRPCClient) TeamService {
+func NewTeamService(repo repository.TeamRepository, userClient client.UserGRPCClient, kafkaProducer kafka.Producer) TeamService {
 	return &teamService{
 		repo:       repo,
 		userClient: userClient,
+		kafkaProducer: kafkaProducer,
 	}
 }
 
@@ -57,6 +60,13 @@ func (s *teamService) CreateTeam(ctx context.Context, input *dto.CreateTeamInput
 
 	if err := s.repo.Create(ctx, team); err != nil {
 		return fmt.Errorf("failed to create team: %w", err)
+	}
+
+	// Emit TEAM_CREATED event
+	teamEvent := kafka.NewTeamEvent(kafka.TeamEventCreated, newTeamId.String(), userID.String(), "")
+	if err := s.kafkaProducer.PublishTeamEvent(ctx, teamEvent); err != nil {
+		// Log error but don't fail the operation
+		fmt.Printf("Failed to publish team created event: %v\n", err)
 	}
 
 	var joinedErr error
@@ -98,14 +108,33 @@ func (s *teamService) AddManager(ctx context.Context, teamID uuid.UUID, managerI
 		if err := s.repo.AddManager(ctx, userID, teamID, managerID); err != nil {
 			return fmt.Errorf("add manager failed: %w", err)
 		}
+
+		// Emit MANAGER_ADDED event
+		teamEvent := kafka.NewTeamEvent(kafka.TeamEventManagerAdded, teamID.String(), userID.String(), managerID.String())
+		if err := s.kafkaProducer.PublishTeamEvent(ctx, teamEvent); err != nil {
+			// Log error but don't fail the operation
+			fmt.Printf("Failed to publish manager added event: %v\n", err)
+		}
 	}
 
 	return nil
 }
 
 func (s *teamService) RemoveManager(ctx context.Context, teamID uuid.UUID, managerID uuid.UUID) error {
+	userID, err := contextkey.GetUserIDFromContext(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get user id from context: %w", err)
+	}
+
 	if err := s.repo.RemoveManager(ctx, teamID, managerID); err != nil {
 		return fmt.Errorf("remove managers failed: %w", err)
+	}
+
+	// Emit MANAGER_REMOVED event
+	teamEvent := kafka.NewTeamEvent(kafka.TeamEventManagerRemoved, teamID.String(), userID.String(), managerID.String())
+	if err := s.kafkaProducer.PublishTeamEvent(ctx, teamEvent); err != nil {
+		// Log error but don't fail the operation
+		fmt.Printf("Failed to publish manager removed event: %v\n", err)
 	}
 
 	return nil
@@ -129,14 +158,33 @@ func (s *teamService) AddMember(ctx context.Context, teamID uuid.UUID, memberIDs
 		if err := s.repo.AddMember(ctx, userID, teamID, memberID); err != nil {
 			return fmt.Errorf("add member failed: %w", err)
 		}
+
+		// Emit MEMBER_ADDED event
+		teamEvent := kafka.NewTeamEvent(kafka.TeamEventMemberAdded, teamID.String(), userID.String(), memberID.String())
+		if err := s.kafkaProducer.PublishTeamEvent(ctx, teamEvent); err != nil {
+			// Log error but don't fail the operation
+			fmt.Printf("Failed to publish member added event: %v\n", err)
+		}
 	}
 
 	return nil
 }
 
 func (s *teamService) RemoveMember(ctx context.Context, teamID uuid.UUID, memberID uuid.UUID) error {
+	userID, err := contextkey.GetUserIDFromContext(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get user id from context: %w", err)
+	}
+
 	if err := s.repo.RemoveMember(ctx, teamID, memberID); err != nil {
 		return fmt.Errorf("remove managers failed: %w", err)
+	}
+
+	// Emit MEMBER_REMOVED event
+	teamEvent := kafka.NewTeamEvent(kafka.TeamEventMemberRemoved, teamID.String(), userID.String(), memberID.String())
+	if err := s.kafkaProducer.PublishTeamEvent(ctx, teamEvent); err != nil {
+		// Log error but don't fail the operation
+		fmt.Printf("Failed to publish member removed event: %v\n", err)
 	}
 
 	return nil

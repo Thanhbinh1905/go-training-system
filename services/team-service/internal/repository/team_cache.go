@@ -3,9 +3,14 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
+)
+
+const (
+	ttl = 30 * time.Minute
 )
 
 type TeamCache struct {
@@ -59,5 +64,27 @@ func (c *TeamCache) SetMembers(ctx context.Context, teamID uuid.UUID, memberIDs 
 		ids[i] = id.String()
 	}
 
-	return c.rdb.SAdd(ctx, c.keyMembers(teamID), ids...).Err()
+	// Thêm TTL để tránh cache stale data
+	pipe := c.rdb.TxPipeline()
+
+	pipe.SAdd(ctx, c.keyMembers(teamID), ids...)
+	pipe.Expire(ctx, c.keyMembers(teamID), ttl)
+
+	_, err := pipe.Exec(ctx)
+	return err
+}
+
+// Thêm method để check cache health
+func (c *TeamCache) IsHealthy(ctx context.Context) bool {
+	return c.rdb.Ping(ctx).Err() == nil
+}
+
+// Thêm method để clear cache khi cần
+func (c *TeamCache) ClearTeamCache(ctx context.Context, teamID uuid.UUID) error {
+	return c.rdb.Del(ctx, c.keyMembers(teamID)).Err()
+}
+
+// Thêm method để get cache stats
+func (c *TeamCache) GetCacheStats(ctx context.Context, teamID uuid.UUID) (int64, error) {
+	return c.rdb.SCard(ctx, c.keyMembers(teamID)).Result()
 }

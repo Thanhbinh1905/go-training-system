@@ -32,7 +32,6 @@ func (r *AssetDBRepo) GetFolderByID(ctx context.Context, id uuid.UUID) (*model.F
 }
 
 func (r *AssetDBRepo) UpdateFolder(ctx context.Context, folder *model.Folder) error {
-	// Use Updates to avoid accidental insert via Save
 	return r.db.WithContext(ctx).
 		Model(&model.Folder{}).
 		Where("id = ?", folder.ID).
@@ -40,7 +39,6 @@ func (r *AssetDBRepo) UpdateFolder(ctx context.Context, folder *model.Folder) er
 }
 
 func (r *AssetDBRepo) DeleteFolder(ctx context.Context, id uuid.UUID) error {
-	// Soft delete (GORM will set DeletedAt)
 	return r.db.WithContext(ctx).Delete(&model.Folder{}, id).Error
 }
 

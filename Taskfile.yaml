@@ -104,3 +104,33 @@ tasks:
   redis-cli: 
     cmds:
       - docker exec -it redis redis-cli
+
+  kafka-topics:
+    desc: List Kafka topics
+    cmds:
+      - docker exec -it kafka kafka-topics --bootstrap-server kafka:29092 --list
+
+  kafka-console-consumer:
+    desc: Consume messages from a Kafka topic
+    cmds:
+      - echo "Usage: task kafka-console-consumer -- topic_name"
+      - docker exec -it kafka kafka-console-consumer --bootstrap-server kafka:29092 --topic {{.CLI_ARGS | default "team.activity"}} --from-beginning
+
+  kafka-console-producer:
+    desc: Produce messages to a Kafka topic
+    cmds:
+      - echo "Usage: task kafka-console-producer -- topic_name"
+      - docker exec -it kafka kafka-console-producer --bootstrap-server kafka:29092 --topic {{.CLI_ARGS | default "team.activity"}}
+
+  kafka-logs:
+    desc: View Kafka logs
+    cmds:
+      - docker logs kafka
+
+  kafka-reset:
+    desc: Reset Kafka topics (delete and recreate)
+    cmds:
+      - docker exec -it kafka kafka-topics --bootstrap-server kafka:29092 --delete --topic team.activity
+      - docker exec -it kafka kafka-topics --bootstrap-server kafka:29092 --delete --topic asset.changes
+      - docker exec -it kafka kafka-topics --bootstrap-server kafka:29092 --create --topic team.activity --partitions 1 --replication-factor 1
+      - docker exec -it kafka kafka-topics --bootstrap-server kafka:29092 --create --topic asset.changes --partitions 1 --replication-factor 1

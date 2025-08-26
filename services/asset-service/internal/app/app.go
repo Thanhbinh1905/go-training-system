@@ -11,6 +11,7 @@ import (
 	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/service"
 	"github.com/Thanhbinh1905/go-training-system/shared/db/postgres"
 	"github.com/Thanhbinh1905/go-training-system/shared/db/redis"
+	"github.com/Thanhbinh1905/go-training-system/shared/kafka"
 	"github.com/Thanhbinh1905/go-training-system/shared/logger"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -47,10 +48,17 @@ func Run(cfg *config.Config) {
 
 	assetRepo := repository.NewCachedAssetRepo(assetDBRepo, assetCacheRepo)
 
+	// Initialize Kafka producer
+	kafkaProducer, err := kafka.NewProducer([]string{"kafka:29092"})
+	if err != nil {
+		log.Fatal("failed to create kafka producer", zap.Error(err))
+	}
+	defer kafkaProducer.Close()
+
 	userClient := client.NewUserGRPCClient(userGRPCURL)
 	teamClient := client.NewTeamGRPCClient(teamGRPCURL)
 
-	assetSvc := service.NewAssetService(assetRepo, *userClient, *teamClient)
+	assetSvc := service.NewAssetService(assetRepo, *userClient, *teamClient, kafkaProducer)
 
 	runHTTPServer(assetSvc, *userClient, log)
 }

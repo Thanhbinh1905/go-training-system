@@ -14,6 +14,7 @@ import (
 	userpb "github.com/Thanhbinh1905/go-training-system/services/team-service/pb/user"
 	"github.com/Thanhbinh1905/go-training-system/shared/db/postgres"
 	"github.com/Thanhbinh1905/go-training-system/shared/db/redis"
+	"github.com/Thanhbinh1905/go-training-system/shared/kafka"
 	"github.com/Thanhbinh1905/go-training-system/shared/logger"
 
 	"net"
@@ -46,9 +47,16 @@ func Run(cfg *config.Config) {
 	teamDBRepo := repository.NewTeamDbRepository(conn)
 	teamCacheRepo := repository.NewTeamCache(redisClient.Client)
 
+	// Initialize Kafka producer
+	kafkaProducer, err := kafka.NewProducer([]string{"kafka:29092"})
+	if err != nil {
+		log.Fatal("failed to create kafka producer", zap.Error(err))
+	}
+	defer kafkaProducer.Close()
+
 	teamRepo := repository.NewTeamRepository(teamDBRepo, teamCacheRepo)
 	userClient := client.NewUserGRPCClient(userGRPCURL)
-	teamService := service.NewTeamService(teamRepo, *userClient)
+	teamService := service.NewTeamService(teamRepo, *userClient, kafkaProducer)
 
 	go runGRPCServer(teamService, cfg.GRPCPort, log)
 	runHTTPServer(teamService, *userClient, log)

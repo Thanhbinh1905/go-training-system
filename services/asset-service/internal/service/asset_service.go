@@ -10,6 +10,7 @@ import (
 	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/model"
 	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/repository"
 	"github.com/Thanhbinh1905/go-training-system/shared/errors"
+	"github.com/Thanhbinh1905/go-training-system/shared/kafka"
 
 	"github.com/google/uuid"
 	"golang.org/x/sync/errgroup"
@@ -51,13 +52,19 @@ type AssetService interface {
 }
 
 type assetService struct {
-	assetRepo  repository.AssetRepo
-	userClient client.UserGRPCClient
-	teamClient client.TeamGRPCClient
+	assetRepo     repository.AssetRepo
+	userClient    client.UserGRPCClient
+	teamClient    client.TeamGRPCClient
+	kafkaProducer kafka.Producer
 }
 
-func NewAssetService(assetRepo repository.AssetRepo, userClient client.UserGRPCClient, teamClient client.TeamGRPCClient) AssetService {
-	return &assetService{assetRepo: assetRepo, userClient: userClient, teamClient: teamClient}
+func NewAssetService(assetRepo repository.AssetRepo, userClient client.UserGRPCClient, teamClient client.TeamGRPCClient, kafkaProducer kafka.Producer) AssetService {
+	return &assetService{
+		assetRepo:     assetRepo,
+		userClient:    userClient,
+		teamClient:    teamClient,
+		kafkaProducer: kafkaProducer,
+	}
 }
 
 // CheckFolderOwnership checks if user owns the folder
@@ -87,7 +94,7 @@ func (s *assetService) checkFolderPermission(ctx context.Context, userID uuid.UU
 	// 2. Check FolderShare
 	folderShare, err := s.assetRepo.GetFolderShare(ctx, userID, folder.ID)
 	if err != nil {
-		return model.AccessLevelNone, fmt.Errorf("get folder share: %w", err)
+		return "", fmt.Errorf("get folder share: %w", err)
 	}
 	if folderShare != nil {
 		if folderShare.Access == model.AccessLevelWrite {
@@ -97,7 +104,7 @@ func (s *assetService) checkFolderPermission(ctx context.Context, userID uuid.UU
 	}
 
 	// 3. Nếu không có quyền
-	return model.AccessLevelNone, nil
+	return "", nil
 }
 
 func (s *assetService) checkNotePermission(ctx context.Context, userID uuid.UUID, note *model.Note) (model.AccessLevel, error) {
@@ -109,7 +116,7 @@ func (s *assetService) checkNotePermission(ctx context.Context, userID uuid.UUID
 	// 2. Check NoteShare
 	noteShare, err := s.assetRepo.GetNoteShare(ctx, userID, note.ID)
 	if err != nil {
-		return model.AccessLevelNone, fmt.Errorf("get note share: %w", err)
+		return "", fmt.Errorf("get note share: %w", err)
 	}
 	if noteShare != nil {
 		if noteShare.Access == model.AccessLevelWrite {
@@ -121,7 +128,7 @@ func (s *assetService) checkNotePermission(ctx context.Context, userID uuid.UUID
 	// 3. Check FolderShare
 	folderShare, err := s.assetRepo.GetFolderShare(ctx, userID, note.FolderID)
 	if err != nil {
-		return model.AccessLevelNone, fmt.Errorf("get folder share: %w", err)
+		return "", fmt.Errorf("get folder share: %w", err)
 	}
 	if folderShare != nil {
 		if folderShare.Access == model.AccessLevelWrite {
@@ -131,7 +138,7 @@ func (s *assetService) checkNotePermission(ctx context.Context, userID uuid.UUID
 	}
 
 	// 4. Nếu không có quyền
-	return model.AccessLevelNone, nil
+	return "", nil
 }
 
 // -------------------- Folder --------------------
@@ -143,7 +150,19 @@ func (s *assetService) CreateFolder(ctx context.Context, userID uuid.UUID, input
 		Description: input.Description,
 		OwnerID:     userID,
 	}
-	return s.assetRepo.CreateFolder(ctx, folder)
+
+	if err := s.assetRepo.CreateFolder(ctx, folder); err != nil {
+		return err
+	}
+
+	// Emit FOLDER_CREATED event
+	assetEvent := kafka.NewAssetEvent(kafka.AssetEventFolderCreated, "folder", folder.ID.String(), userID.String(), userID.String())
+	if err := s.kafkaProducer.PublishAssetEvent(ctx, assetEvent); err != nil {
+		// Log error but don't fail the operation
+		fmt.Printf("Failed to publish folder created event: %v\n", err)
+	}
+
+	return nil
 }
 
 func (s *assetService) GetFolderByID(ctx context.Context, userID, folderID uuid.UUID) (*dto.FolderBlock, error) {
@@ -157,7 +176,7 @@ func (s *assetService) GetFolderByID(ctx context.Context, userID, folderID uuid.
 	if err != nil {
 		return nil, err
 	}
-	if folderPerm == model.AccessLevelNone {
+	if folderPerm == "" {
 		return nil, errors.ErrForbidden
 	}
 
@@ -198,6 +217,14 @@ func (s *assetService) UpdateFolder(ctx context.Context, userID, folderID uuid.U
 	if err := s.assetRepo.UpdateFolder(ctx, existing); err != nil {
 		return fmt.Errorf("update folder: %w", err)
 	}
+
+	// Emit FOLDER_UPDATED event
+	assetEvent := kafka.NewAssetEvent(kafka.AssetEventFolderUpdated, "folder", folderID.String(), existing.OwnerID.String(), userID.String())
+	if err := s.kafkaProducer.PublishAssetEvent(ctx, assetEvent); err != nil {
+		// Log error but don't fail the operation
+		fmt.Printf("Failed to publish folder updated event: %v\n", err)
+	}
+
 	return nil
 }
 
@@ -218,6 +245,14 @@ func (s *assetService) DeleteFolder(ctx context.Context, userID, folderID uuid.U
 	if err := s.assetRepo.DeleteFolder(ctx, folderID); err != nil {
 		return fmt.Errorf("delete folder: %w", err)
 	}
+
+	// Emit FOLDER_DELETED event
+	assetEvent := kafka.NewAssetEvent(kafka.AssetEventFolderDeleted, "folder", folderID.String(), existing.OwnerID.String(), userID.String())
+	if err := s.kafkaProducer.PublishAssetEvent(ctx, assetEvent); err != nil {
+		// Log error but don't fail the operation
+		fmt.Printf("Failed to publish folder deleted event: %v\n", err)
+	}
+
 	return nil
 }
 
@@ -231,7 +266,19 @@ func (s *assetService) CreateNote(ctx context.Context, userID uuid.UUID, input *
 		FolderID: input.FolderID,
 		OwnerID:  userID,
 	}
-	return s.assetRepo.CreateNote(ctx, note)
+
+	if err := s.assetRepo.CreateNote(ctx, note); err != nil {
+		return err
+	}
+
+	// Emit NOTE_CREATED event
+	assetEvent := kafka.NewAssetEvent(kafka.AssetEventNoteCreated, "note", note.ID.String(), userID.String(), userID.String())
+	if err := s.kafkaProducer.PublishAssetEvent(ctx, assetEvent); err != nil {
+		// Log error but don't fail the operation
+		fmt.Printf("Failed to publish note created event: %v\n", err)
+	}
+
+	return nil
 }
 
 func (s *assetService) GetNoteByID(ctx context.Context, userID, noteID uuid.UUID) (*dto.NoteBlock, error) {
@@ -245,7 +292,7 @@ func (s *assetService) GetNoteByID(ctx context.Context, userID, noteID uuid.UUID
 	if err != nil {
 		return nil, err
 	}
-	if perm == model.AccessLevelNone {
+	if perm == "" {
 		return nil, errors.ErrForbidden
 	}
 
@@ -281,6 +328,14 @@ func (s *assetService) UpdateNote(ctx context.Context, userID, noteID uuid.UUID,
 	if err := s.assetRepo.UpdateNote(ctx, existing); err != nil {
 		return fmt.Errorf("update note: %w", err)
 	}
+
+	// Emit NOTE_UPDATED event
+	assetEvent := kafka.NewAssetEvent(kafka.AssetEventNoteUpdated, "note", noteID.String(), existing.OwnerID.String(), userID.String())
+	if err := s.kafkaProducer.PublishAssetEvent(ctx, assetEvent); err != nil {
+		// Log error but don't fail the operation
+		fmt.Printf("Failed to publish note updated event: %v\n", err)
+	}
+
 	return nil
 }
 
@@ -302,6 +357,14 @@ func (s *assetService) DeleteNote(ctx context.Context, userID, noteID uuid.UUID)
 	if err := s.assetRepo.DeleteNote(ctx, noteID); err != nil {
 		return fmt.Errorf("delete note: %w", err)
 	}
+
+	// Emit NOTE_DELETED event
+	assetEvent := kafka.NewAssetEvent(kafka.AssetEventNoteDeleted, "note", noteID.String(), existing.OwnerID.String(), userID.String())
+	if err := s.kafkaProducer.PublishAssetEvent(ctx, assetEvent); err != nil {
+		// Log error but don't fail the operation
+		fmt.Printf("Failed to publish note deleted event: %v\n", err)
+	}
+
 	return nil
 }
 
@@ -351,7 +414,21 @@ func (s *assetService) ShareFolder(ctx context.Context, userID, folderID uuid.UU
 	if input.Access != nil {
 		access = *input.Access
 	}
-	return s.assetRepo.ShareFolder(ctx, folderID, userID, input.UserIDs, access)
+
+	if err := s.assetRepo.ShareFolder(ctx, folderID, userID, input.UserIDs, access); err != nil {
+		return err
+	}
+
+	// Emit FOLDER_SHARED event for each user
+	for _, targetUserID := range input.UserIDs {
+		assetEvent := kafka.NewAssetEvent(kafka.AssetEventFolderShared, "folder", folderID.String(), userID.String(), targetUserID.String())
+		if err := s.kafkaProducer.PublishAssetEvent(ctx, assetEvent); err != nil {
+			// Log error but don't fail the operation
+			fmt.Printf("Failed to publish folder shared event: %v\n", err)
+		}
+	}
+
+	return nil
 }
 
 func (s *assetService) ShareNote(ctx context.Context, userID, noteID uuid.UUID, input *dto.CreateNoteShareInput) error {
@@ -359,7 +436,21 @@ func (s *assetService) ShareNote(ctx context.Context, userID, noteID uuid.UUID, 
 	if input.Access != nil {
 		access = *input.Access
 	}
-	return s.assetRepo.ShareNote(ctx, noteID, userID, input.UserIDs, access)
+
+	if err := s.assetRepo.ShareNote(ctx, noteID, userID, input.UserIDs, access); err != nil {
+		return err
+	}
+
+	// Emit NOTE_SHARED event for each user
+	for _, targetUserID := range input.UserIDs {
+		assetEvent := kafka.NewAssetEvent(kafka.AssetEventNoteShared, "note", noteID.String(), userID.String(), targetUserID.String())
+		if err := s.kafkaProducer.PublishAssetEvent(ctx, assetEvent); err != nil {
+			// Log error but don't fail the operation
+			fmt.Printf("Failed to publish note shared event: %v\n", err)
+		}
+	}
+
+	return nil
 }
 
 func (s *assetService) RevokeFolderShare(ctx context.Context, folderID, userID uuid.UUID) error {
@@ -731,7 +822,7 @@ func (s *assetService) getUserFoldersByTeamMember(ctx context.Context, requested
 		}
 
 		// Chỉ process nếu có permission
-		if folderPerm == model.AccessLevelNone {
+		if folderPerm == "" {
 			continue
 		}
 
@@ -747,7 +838,7 @@ func (s *assetService) getUserFoldersByTeamMember(ctx context.Context, requested
 				}
 
 				// Skip note nếu không có permission
-				if notePerm == model.AccessLevelNone {
+				if notePerm == "" {
 					continue
 				}
 			}

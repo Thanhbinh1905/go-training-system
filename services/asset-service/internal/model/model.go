@@ -12,7 +12,6 @@ type AccessLevel string
 const (
 	AccessLevelRead  AccessLevel = "read"
 	AccessLevelWrite AccessLevel = "write"
-	AccessLevelNone  AccessLevel = "none"
 )
 
 // Folder represents a folder that contains notes
