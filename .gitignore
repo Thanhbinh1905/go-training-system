@@ -3,6 +3,23 @@ logs/
 token.json
 **/tmp/
 
-services/asset-service/asset-service
-services/team-service/team-service
-services/user-service/user-service
+
+# binaries
+services/*/*-service
+services/*/tmp/
+services/*/logs/*
+logs/
+tmp/
+
+# Go build
+bin/
+dist/
+coverage.out
+
+# Editor/OS
+.vscode/
+.idea/
+.DS_Store
+
+GRACEFUL_SHUTDOWN.md
+KAFKA_INTEGRATION.md

@@ -9,6 +9,7 @@ import (
 	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/dto"
 	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/model"
 	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/repository"
+	"github.com/Thanhbinh1905/go-training-system/shared/contextkey"
 	"github.com/Thanhbinh1905/go-training-system/shared/errors"
 	"github.com/Thanhbinh1905/go-training-system/shared/kafka"
 
@@ -89,6 +90,11 @@ func (s *assetService) checkFolderPermission(ctx context.Context, userID uuid.UU
 	// 1. Owner => full quyền
 	if folder.OwnerID == userID {
 		return model.AccessLevelWrite, nil
+	}
+
+	// 1.5. Check Redis ACL first
+	if perm, err := s.assetRepo.GetUserAccessFromACL(ctx, folder.ID, userID); err == nil && perm != "" {
+		return perm, nil
 	}
 
 	// 2. Check FolderShare
@@ -421,8 +427,8 @@ func (s *assetService) ShareFolder(ctx context.Context, userID, folderID uuid.UU
 
 	// Emit FOLDER_SHARED event for each user
 	for _, targetUserID := range input.UserIDs {
-		assetEvent := kafka.NewAssetEvent(kafka.AssetEventFolderShared, "folder", folderID.String(), userID.String(), targetUserID.String())
-		if err := s.kafkaProducer.PublishAssetEvent(ctx, assetEvent); err != nil {
+		assetEvent := kafka.NewAssetShareEvent(kafka.AssetEventFolderShared, "folder", folderID.String(), userID.String(), userID.String(), targetUserID.String(), string(access))
+		if err := s.kafkaProducer.PublishAssetShareEvent(ctx, assetEvent); err != nil {
 			// Log error but don't fail the operation
 			fmt.Printf("Failed to publish folder shared event: %v\n", err)
 		}
@@ -443,8 +449,8 @@ func (s *assetService) ShareNote(ctx context.Context, userID, noteID uuid.UUID, 
 
 	// Emit NOTE_SHARED event for each user
 	for _, targetUserID := range input.UserIDs {
-		assetEvent := kafka.NewAssetEvent(kafka.AssetEventNoteShared, "note", noteID.String(), userID.String(), targetUserID.String())
-		if err := s.kafkaProducer.PublishAssetEvent(ctx, assetEvent); err != nil {
+		assetEvent := kafka.NewAssetShareEvent(kafka.AssetEventNoteShared, "note", noteID.String(), userID.String(), userID.String(), targetUserID.String(), string(access))
+		if err := s.kafkaProducer.PublishAssetShareEvent(ctx, assetEvent); err != nil {
 			// Log error but don't fail the operation
 			fmt.Printf("Failed to publish note shared event: %v\n", err)
 		}
@@ -454,11 +460,65 @@ func (s *assetService) ShareNote(ctx context.Context, userID, noteID uuid.UUID, 
 }
 
 func (s *assetService) RevokeFolderShare(ctx context.Context, folderID, userID uuid.UUID) error {
-	return s.assetRepo.RevokeFolderShare(ctx, folderID, userID)
+	actorID, err := contextkey.GetUserIDFromContext(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get user id from context: %w", err)
+	}
+
+	folder, err := s.assetRepo.GetFolderByID(ctx, folderID)
+	if err != nil {
+		return fmt.Errorf("get folder: %w", err)
+	}
+
+	if err := s.assetRepo.RevokeFolderShare(ctx, folderID, userID); err != nil {
+		return err
+	}
+
+	shareEvent := kafka.NewAssetShareEvent(
+		kafka.AssetEventFolderUnshared,
+		"folder",
+		folderID.String(),
+		folder.OwnerID.String(),
+		actorID.String(),
+		userID.String(),
+		"",
+	)
+	if err := s.kafkaProducer.PublishAssetShareEvent(ctx, shareEvent); err != nil {
+		fmt.Printf("Failed to publish folder unshared event: %v\n", err)
+	}
+
+	return nil
 }
 
 func (s *assetService) RevokeNoteShare(ctx context.Context, noteID, userID uuid.UUID) error {
-	return s.assetRepo.RevokeNoteShare(ctx, noteID, userID)
+	actorID, err := contextkey.GetUserIDFromContext(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get user id from context: %w", err)
+	}
+
+	note, err := s.assetRepo.GetNoteByID(ctx, noteID)
+	if err != nil {
+		return fmt.Errorf("get note: %w", err)
+	}
+
+	if err := s.assetRepo.RevokeNoteShare(ctx, noteID, userID); err != nil {
+		return err
+	}
+
+	shareEvent := kafka.NewAssetShareEvent(
+		kafka.AssetEventNoteUnshared,
+		"note",
+		noteID.String(),
+		note.OwnerID.String(),
+		actorID.String(),
+		userID.String(),
+		"",
+	)
+	if err := s.kafkaProducer.PublishAssetShareEvent(ctx, shareEvent); err != nil {
+		fmt.Printf("Failed to publish note unshared event: %v\n", err)
+	}
+
+	return nil
 }
 
 // -------------------- Manage Team Asset --------------------

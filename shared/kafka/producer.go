@@ -13,6 +13,7 @@ import (
 type Producer interface {
 	PublishTeamEvent(ctx context.Context, event *TeamEvent) error
 	PublishAssetEvent(ctx context.Context, event *AssetEvent) error
+	PublishAssetShareEvent(ctx context.Context, event *AssetShareEvent) error
 	Close() error
 }
 
@@ -56,6 +57,27 @@ func (p *KafkaProducer) PublishTeamEvent(ctx context.Context, event *TeamEvent) 
 
 // PublishAssetEvent publishes asset events to asset.changes topic
 func (p *KafkaProducer) PublishAssetEvent(ctx context.Context, event *AssetEvent) error {
+	eventBytes, err := json.Marshal(event)
+	if err != nil {
+		return fmt.Errorf("failed to marshal asset event: %w", err)
+	}
+
+	err = p.writer.WriteMessages(ctx, kafka.Message{
+		Topic: AssetChangesTopic,
+		Key:   []byte(event.AssetID),
+		Value: eventBytes,
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to publish asset event: %w", err)
+	}
+
+	log.Printf("Published asset event: %s for %s %s", event.EventType, event.AssetType, event.AssetID)
+	return nil
+}
+
+// PublishAssetEvent publishes asset events to asset.changes topic
+func (p *KafkaProducer) PublishAssetShareEvent(ctx context.Context, event *AssetShareEvent) error {
 	eventBytes, err := json.Marshal(event)
 	if err != nil {
 		return fmt.Errorf("failed to marshal asset event: %w", err)

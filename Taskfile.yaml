@@ -134,3 +134,24 @@ tasks:
       - docker exec -it kafka kafka-topics --bootstrap-server kafka:29092 --delete --topic asset.changes
       - docker exec -it kafka kafka-topics --bootstrap-server kafka:29092 --create --topic team.activity --partitions 1 --replication-factor 1
       - docker exec -it kafka kafka-topics --bootstrap-server kafka:29092 --create --topic asset.changes --partitions 1 --replication-factor 1
+
+  graceful-shutdown-test:
+    desc: Test graceful shutdown by sending SIGTERM to services
+    cmds:
+      - echo "Testing graceful shutdown..."
+      - echo "Send SIGTERM to user-service: docker kill --signal=SIGTERM user-service"
+      - echo "Send SIGTERM to team-service: docker kill --signal=SIGTERM team-service"
+      - echo "Send SIGTERM to asset-service: docker kill --signal=SIGTERM asset-service"
+      - echo "Check logs: docker logs user-service | tail -20"
+
+  service-logs:
+    desc: View service logs
+    cmds:
+      - echo "User Service Logs:"
+      - docker logs user-service --tail=20
+      - echo ""
+      - echo "Team Service Logs:"
+      - docker logs team-service --tail=20
+      - echo ""
+      - echo "Asset Service Logs:"
+      - docker logs asset-service --tail=20

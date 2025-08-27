@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"log"
 	"net"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/internal/util/token"
 	"github.com/Thanhbinh1905/go-training-system/services/user-service/pb"
 	"github.com/Thanhbinh1905/go-training-system/shared/db/postgres"
+	"github.com/Thanhbinh1905/go-training-system/shared/graceful"
 	"github.com/Thanhbinh1905/go-training-system/shared/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -28,6 +30,12 @@ import (
 
 	grpcHandler "github.com/Thanhbinh1905/go-training-system/services/user-service/internal/handler/grpc"
 	ginzap "github.com/gin-contrib/zap"
+)
+
+const (
+	GRATEFUL_TIMEOUT          = 30 * time.Second
+	ACCESS_TOKEN_EXPIRE_TIME  = 24 * time.Hour
+	REFRESH_TOKEN_EXPIRE_TIME = 7 * 24 * time.Hour
 )
 
 // Defining the Graphql handler
@@ -65,22 +73,28 @@ func playgroundHandler() gin.HandlerFunc {
 	}
 }
 
-func RunGRPCServer(userService service.UserService, port string) {
+func RunGRPCServer(userService service.UserService, port string) (*grpc.Server, net.Listener, error) {
 	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
-		log.Fatalf("failed to listen on gRPC port: %v", err)
+		return nil, nil, err
 	}
 
 	grpcServer := grpc.NewServer()
 	pb.RegisterUserServiceServer(grpcServer, grpcHandler.NewUserRPCHandler(userService))
 
 	log.Println("gRPC server listening on :50051")
-	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("failed to serve gRPC: %v", err)
-	}
+
+	// Start server in goroutine
+	go func() {
+		if err := grpcServer.Serve(lis); err != nil {
+			log.Printf("gRPC server error: %v", err)
+		}
+	}()
+
+	return grpcServer, lis, nil
 }
 
-func RunHTTPServer(userService service.UserService, log *zap.Logger) {
+func RunHTTPServer(userService service.UserService, log *zap.Logger) (*http.Server, error) {
 	userHandler := httpHandler.NewUserHandler(userService)
 	gqlHandler := graphqlHandler(userService)
 
@@ -101,10 +115,22 @@ func RunHTTPServer(userService service.UserService, log *zap.Logger) {
 		v1.POST("/users", userHandler.CreateUserFromFile)
 	}
 
-	log.Info("Starting HTTP server", zap.String("port", "8080"))
-	if err := r.Run(":8080"); err != nil {
-		log.Fatal("failed to run HTTP server", zap.Error(err))
+	// Create HTTP server
+	server := &http.Server{
+		Addr:    ":8080",
+		Handler: r,
 	}
+
+	log.Info("Starting HTTP server", zap.String("port", "8080"))
+
+	// Start server in goroutine
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal("failed to run HTTP server", zap.Error(err))
+		}
+	}()
+
+	return server, nil
 }
 
 func Run(cfg *config.Config) {
@@ -121,12 +147,62 @@ func Run(cfg *config.Config) {
 
 	// Init dependencies
 	userRepo := repository.NewUserRepository(conn)
-	jwtManager := token.NewJWTManager(cfg.JWTSecret, cfg.JWTSecret, 24*time.Hour, 7*24*time.Hour)
+	jwtManager := token.NewJWTManager(cfg.JWTSecret, cfg.JWTSecret, ACCESS_TOKEN_EXPIRE_TIME, REFRESH_TOKEN_EXPIRE_TIME)
 	userService := service.NewUserService(userRepo, jwtManager)
 
-	// Run gRPC in background
-	go RunGRPCServer(userService, cfg.GRPCPort)
+	// Start gRPC server
+	grpcServer, grpcListener, err := RunGRPCServer(userService, cfg.GRPCPort)
+	if err != nil {
+		log.Fatal("Failed to start gRPC server", zap.Error(err))
+	}
 
-	// Start HTTP server (GraphQL + REST)
-	RunHTTPServer(userService, log)
+	// Start HTTP server
+	httpServer, err := RunHTTPServer(userService, log)
+	if err != nil {
+		log.Fatal("Failed to start HTTP server", zap.Error(err))
+	}
+
+	// Create graceful shutdown server
+	gracefulServer := graceful.NewGracefulServer(GRATEFUL_TIMEOUT)
+
+	// Add services for graceful shutdown
+	gracefulServer.AddService(&gracefulService{
+		name:         "gRPC Server",
+		grpcServer:   grpcServer,
+		grpcListener: grpcListener,
+		httpServer:   httpServer,
+		log:          log,
+	})
+
+	// Start graceful shutdown listener
+	gracefulServer.Start()
+}
+
+// gracefulService implements Shutdownable interface
+type gracefulService struct {
+	name         string
+	grpcServer   *grpc.Server
+	grpcListener net.Listener
+	httpServer   *http.Server
+	log          *zap.Logger
+}
+
+func (s *gracefulService) Shutdown(ctx context.Context) error {
+	s.log.Info("Shutting down " + s.name)
+
+	// Shutdown HTTP server
+	if err := s.httpServer.Shutdown(ctx); err != nil {
+		s.log.Error("HTTP server shutdown error", zap.Error(err))
+	}
+
+	// Shutdown gRPC server
+	s.grpcServer.GracefulStop()
+
+	// Close gRPC listener
+	if err := s.grpcListener.Close(); err != nil {
+		s.log.Error("gRPC listener close error", zap.Error(err))
+	}
+
+	s.log.Info(s.name + " shutdown completed")
+	return nil
 }

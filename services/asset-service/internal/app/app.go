@@ -1,6 +1,8 @@
 package app
 
 import (
+	"context"
+	"net/http"
 	"time"
 
 	"github.com/Thanhbinh1905/go-training-system/services/asset-service/config"
@@ -11,6 +13,7 @@ import (
 	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/service"
 	"github.com/Thanhbinh1905/go-training-system/shared/db/postgres"
 	"github.com/Thanhbinh1905/go-training-system/shared/db/redis"
+	"github.com/Thanhbinh1905/go-training-system/shared/graceful"
 	"github.com/Thanhbinh1905/go-training-system/shared/kafka"
 	"github.com/Thanhbinh1905/go-training-system/shared/logger"
 	"github.com/gin-gonic/gin"
@@ -18,6 +21,10 @@ import (
 
 	ginzap "github.com/gin-contrib/zap"
 	ginprometheus "github.com/zsais/go-gin-prometheus"
+)
+
+const (
+	GRATEFUL_TIMEOUT = 30 * time.Second
 )
 
 const (
@@ -60,10 +67,27 @@ func Run(cfg *config.Config) {
 
 	assetSvc := service.NewAssetService(assetRepo, *userClient, *teamClient, kafkaProducer)
 
-	runHTTPServer(assetSvc, *userClient, log)
+	// Start HTTP server
+	httpServer, err := runHTTPServer(assetSvc, *userClient, log)
+	if err != nil {
+		log.Fatal("Failed to start HTTP server", zap.Error(err))
+	}
+
+	// Create graceful shutdown server
+	gracefulServer := graceful.NewGracefulServer(GRATEFUL_TIMEOUT)
+
+	// Add services for graceful shutdown
+	gracefulServer.AddService(&gracefulService{
+		name:       "Asset Service",
+		httpServer: httpServer,
+		log:        log,
+	})
+
+	// Start graceful shutdown listener
+	gracefulServer.Start()
 }
 
-func runHTTPServer(assetService service.AssetService, userClient client.UserGRPCClient, log *zap.Logger) {
+func runHTTPServer(assetService service.AssetService, userClient client.UserGRPCClient, log *zap.Logger) (*http.Server, error) {
 	r := gin.Default()
 	r.Use(ginzap.Ginzap(log, time.RFC3339, true))
 	r.Use(ginzap.RecoveryWithZap(log, true))
@@ -100,9 +124,39 @@ func runHTTPServer(assetService service.AssetService, userClient client.UserGRPC
 		assetGroup.GET("/users/:userId/assets", assetHandler.GetUserAssets)
 	}
 
-	log.Info("HTTP server started", zap.String("port", "8080"))
-	if err := r.Run(":8080"); err != nil {
-		log.Fatal("failed to run HTTP server", zap.Error(err))
+	// Create HTTP server
+	server := &http.Server{
+		Addr:    ":8080",
+		Handler: r,
 	}
 
+	log.Info("HTTP server started", zap.String("port", "8080"))
+
+	// Start server in goroutine
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal("failed to run HTTP server", zap.Error(err))
+		}
+	}()
+
+	return server, nil
+}
+
+// gracefulService implements Shutdownable interface
+type gracefulService struct {
+	name       string
+	httpServer *http.Server
+	log        *zap.Logger
+}
+
+func (s *gracefulService) Shutdown(ctx context.Context) error {
+	s.log.Info("Shutting down " + s.name)
+
+	// Shutdown HTTP server
+	if err := s.httpServer.Shutdown(ctx); err != nil {
+		s.log.Error("HTTP server shutdown error", zap.Error(err))
+	}
+
+	s.log.Info(s.name + " shutdown completed")
+	return nil
 }

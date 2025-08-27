@@ -171,3 +171,47 @@ func (c *AssetCache) SetNotes(ctx context.Context, notes []*model.Note) error {
 	_, err := pipe.Exec(ctx)
 	return err
 }
+
+// -------------------- ACL (Access Control) --------------------
+
+// acl key format: asset:{assetId}:acl => hash(userId => accessType)
+func (c *AssetCache) aclKey(assetID uuid.UUID) string {
+	return fmt.Sprintf("asset:%s:acl", assetID.String())
+}
+
+// SetAssetACLForUser sets access for a single user on an asset
+func (c *AssetCache) SetAssetACLForUser(ctx context.Context, assetID, userID uuid.UUID, access model.AccessLevel) error {
+	key := c.aclKey(assetID)
+	return c.rdb.HSet(ctx, key, userID.String(), string(access)).Err()
+}
+
+// SetAssetACL sets access for multiple users on an asset
+func (c *AssetCache) SetAssetACLForUsers(ctx context.Context, assetID uuid.UUID, userIDs []uuid.UUID, access model.AccessLevel) error {
+	key := c.aclKey(assetID)
+	if len(userIDs) == 0 {
+		return nil
+	}
+	fields := make(map[string]interface{}, len(userIDs))
+	for _, uid := range userIDs {
+		fields[uid.String()] = string(access)
+	}
+	return c.rdb.HSet(ctx, key, fields).Err()
+}
+
+// RemoveAssetACLForUser removes a user's access from an asset
+func (c *AssetCache) RemoveAssetACLForUser(ctx context.Context, assetID, userID uuid.UUID) error {
+	key := c.aclKey(assetID)
+	return c.rdb.HDel(ctx, key, userID.String()).Err()
+}
+
+// GetAssetACLForUser retrieves a user's access for an asset
+func (c *AssetCache) GetAssetACLForUser(ctx context.Context, assetID, userID uuid.UUID) (model.AccessLevel, error) {
+	key := c.aclKey(assetID)
+	val, err := c.rdb.HGet(ctx, key, userID.String()).Result()
+	if err == redis.Nil {
+		return "", nil
+	} else if err != nil {
+		return "", err
+	}
+	return model.AccessLevel(val), nil
+}

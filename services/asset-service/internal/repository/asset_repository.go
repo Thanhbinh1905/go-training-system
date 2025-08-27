@@ -32,6 +32,9 @@ type AssetRepo interface {
 	ShareNote(ctx context.Context, noteID, sharedByID uuid.UUID, userIDs []uuid.UUID, access model.AccessLevel) error
 	RevokeNoteShare(ctx context.Context, noteID, userID uuid.UUID) error
 
+	// ACL
+	GetUserAccessFromACL(ctx context.Context, assetID, userID uuid.UUID) (model.AccessLevel, error)
+
 	// Get single share records (normalize not found -> nil, nil)
 	GetNoteShare(ctx context.Context, userID, noteID uuid.UUID) (*model.NoteShare, error)
 	GetFolderShare(ctx context.Context, userID, folderID uuid.UUID) (*model.FolderShare, error)
@@ -153,19 +156,41 @@ func (r *CachedAssetRepo) GetSharedNotes(ctx context.Context, userID uuid.UUID) 
 // -------------------- Sharing --------------------
 
 func (r *CachedAssetRepo) ShareFolder(ctx context.Context, folderID, sharedByID uuid.UUID, userIDs []uuid.UUID, access model.AccessLevel) error {
-	return r.dbRepo.ShareFolder(ctx, folderID, sharedByID, userIDs, access)
+	if err := r.dbRepo.ShareFolder(ctx, folderID, sharedByID, userIDs, access); err != nil {
+		return err
+	}
+	_ = r.cache.SetAssetACLForUsers(ctx, folderID, userIDs, access)
+	return nil
 }
 
 func (r *CachedAssetRepo) RevokeFolderShare(ctx context.Context, folderID, userID uuid.UUID) error {
-	return r.dbRepo.RevokeFolderShare(ctx, folderID, userID)
+	if err := r.dbRepo.RevokeFolderShare(ctx, folderID, userID); err != nil {
+		return err
+	}
+	_ = r.cache.RemoveAssetACLForUser(ctx, folderID, userID)
+	return nil
 }
 
 func (r *CachedAssetRepo) ShareNote(ctx context.Context, noteID, sharedByID uuid.UUID, userIDs []uuid.UUID, access model.AccessLevel) error {
-	return r.dbRepo.ShareNote(ctx, noteID, sharedByID, userIDs, access)
+	if err := r.dbRepo.ShareNote(ctx, noteID, sharedByID, userIDs, access); err != nil {
+		return err
+	}
+	_ = r.cache.SetAssetACLForUsers(ctx, noteID, userIDs, access)
+	return nil
 }
 
 func (r *CachedAssetRepo) RevokeNoteShare(ctx context.Context, noteID, userID uuid.UUID) error {
-	return r.dbRepo.RevokeNoteShare(ctx, noteID, userID)
+	if err := r.dbRepo.RevokeNoteShare(ctx, noteID, userID); err != nil {
+		return err
+	}
+	_ = r.cache.RemoveAssetACLForUser(ctx, noteID, userID)
+	return nil
+}
+
+// -------------------- ACL --------------------
+
+func (r *CachedAssetRepo) GetUserAccessFromACL(ctx context.Context, assetID, userID uuid.UUID) (model.AccessLevel, error) {
+	return r.cache.GetAssetACLForUser(ctx, assetID, userID)
 }
 
 // -------------------- Single Share --------------------
