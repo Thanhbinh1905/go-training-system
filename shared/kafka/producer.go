@@ -29,71 +29,52 @@ func NewProducer(brokers []string) (*KafkaProducer, error) {
 		Balancer: &kafka.LeastBytes{},
 	}
 
-	return &KafkaProducer{
-		writer: writer,
-	}, nil
+	return &KafkaProducer{writer: writer}, nil
+}
+
+// publish is an internal helper to send events to Kafka
+func (p *KafkaProducer) publish(ctx context.Context, topic, key string, event any) error {
+	eventBytes, err := json.Marshal(event)
+	if err != nil {
+		return fmt.Errorf("failed to marshal event: %w", err)
+	}
+
+	err = p.writer.WriteMessages(ctx, kafka.Message{
+		Topic: topic,
+		Key:   []byte(key),
+		Value: eventBytes,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to publish event to topic %s: %w", topic, err)
+	}
+
+	return nil
 }
 
 // PublishTeamEvent publishes team events to team.activity topic
 func (p *KafkaProducer) PublishTeamEvent(ctx context.Context, event *TeamEvent) error {
-	eventBytes, err := json.Marshal(event)
-	if err != nil {
-		return fmt.Errorf("failed to marshal team event: %w", err)
+	if err := p.publish(ctx, TeamActivityTopic, event.TeamID, event); err != nil {
+		return err
 	}
-
-	err = p.writer.WriteMessages(ctx, kafka.Message{
-		Topic: TeamActivityTopic,
-		Key:   []byte(event.TeamID),
-		Value: eventBytes,
-	})
-
-	if err != nil {
-		return fmt.Errorf("failed to publish team event: %w", err)
-	}
-
-	log.Printf("Published team event: %s for team %s", event.EventType, event.TeamID)
+	log.Printf("[Kafka] Published team event: %s for team %s", event.EventType, event.TeamID)
 	return nil
 }
 
 // PublishAssetEvent publishes asset events to asset.changes topic
 func (p *KafkaProducer) PublishAssetEvent(ctx context.Context, event *AssetEvent) error {
-	eventBytes, err := json.Marshal(event)
-	if err != nil {
-		return fmt.Errorf("failed to marshal asset event: %w", err)
+	if err := p.publish(ctx, AssetChangesTopic, event.AssetID, event); err != nil {
+		return err
 	}
-
-	err = p.writer.WriteMessages(ctx, kafka.Message{
-		Topic: AssetChangesTopic,
-		Key:   []byte(event.AssetID),
-		Value: eventBytes,
-	})
-
-	if err != nil {
-		return fmt.Errorf("failed to publish asset event: %w", err)
-	}
-
-	log.Printf("Published asset event: %s for %s %s", event.EventType, event.AssetType, event.AssetID)
+	log.Printf("[Kafka] Published asset event: %s for %s %s", event.EventType, event.AssetType, event.AssetID)
 	return nil
 }
 
-// PublishAssetEvent publishes asset events to asset.changes topic
+// PublishAssetShareEvent publishes asset share events to asset.shares topic
 func (p *KafkaProducer) PublishAssetShareEvent(ctx context.Context, event *AssetShareEvent) error {
-	eventBytes, err := json.Marshal(event)
-	if err != nil {
-		return fmt.Errorf("failed to marshal asset event: %w", err)
+	if err := p.publish(ctx, AssetChangesTopic, event.AssetID, event); err != nil {
+		return err
 	}
-
-	err = p.writer.WriteMessages(ctx, kafka.Message{
-		Topic: AssetChangesTopic,
-		Key:   []byte(event.AssetID),
-		Value: eventBytes,
-	})
-
-	if err != nil {
-		return fmt.Errorf("failed to publish asset event: %w", err)
-	}
-
-	log.Printf("Published asset event: %s for %s %s", event.EventType, event.AssetType, event.AssetID)
+	log.Printf("[Kafka] Published asset share event: %s for %s %s", event.EventType, event.AssetType, event.AssetID)
 	return nil
 }
 

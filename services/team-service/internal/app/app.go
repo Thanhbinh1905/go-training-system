@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Thanhbinh1905/go-training-system/services/team-service/config"
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/client"
+	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/config"
 	grpcHandler "github.com/Thanhbinh1905/go-training-system/services/team-service/internal/handler/grpc"
 	httpHandler "github.com/Thanhbinh1905/go-training-system/services/team-service/internal/handler/http"
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/middleware"
@@ -53,7 +53,7 @@ func Run(cfg *config.Config) {
 	teamCacheRepo := repository.NewTeamCache(redisClient.Client)
 
 	// Initialize Kafka producer
-	kafkaProducer, err := kafka.NewProducer([]string{"kafka:29092"})
+	kafkaProducer, err := kafka.NewProducer([]string{cfg.KAFKA_BROKER})
 	if err != nil {
 		log.Fatal("failed to create kafka producer", zap.Error(err))
 	}

@@ -31,15 +31,15 @@ type TeamService interface {
 }
 
 type teamService struct {
-	repo       repository.TeamRepository
-	userClient client.UserGRPCClient
+	repo          repository.TeamRepository
+	userClient    client.UserGRPCClient
 	kafkaProducer kafka.Producer
 }
 
 func NewTeamService(repo repository.TeamRepository, userClient client.UserGRPCClient, kafkaProducer kafka.Producer) TeamService {
 	return &teamService{
-		repo:       repo,
-		userClient: userClient,
+		repo:          repo,
+		userClient:    userClient,
 		kafkaProducer: kafkaProducer,
 	}
 }

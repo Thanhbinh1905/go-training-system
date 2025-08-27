@@ -23,6 +23,8 @@ type TeamEventHandler func(event *TeamEvent) error
 // AssetEventHandler handles asset events
 type AssetEventHandler func(event *AssetEvent) error
 
+type AssetShareEventHandler func(event *AssetShareEvent) error
+
 // KafkaConsumer implements Consumer interface
 type KafkaConsumer struct {
 	teamReader  *kafka.Reader
@@ -86,7 +88,7 @@ func (c *KafkaConsumer) ConsumeTeamEvents(ctx context.Context, handler TeamEvent
 }
 
 // ConsumeAssetEvents consumes asset events from asset.changes topic
-func (c *KafkaConsumer) ConsumeAssetEvents(ctx context.Context, handler AssetEventHandler) error {
+func (c *KafkaConsumer) ConsumeAssetEvents(ctx context.Context, handler AssetEventHandler, shareHandler AssetShareEventHandler) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -98,19 +100,38 @@ func (c *KafkaConsumer) ConsumeAssetEvents(ctx context.Context, handler AssetEve
 				continue
 			}
 
-			var event AssetEvent
-			if err := json.Unmarshal(m.Value, &event); err != nil {
-				log.Printf("Error unmarshaling asset event: %v", err)
+			// Unmarshal to read event type
+			var base BaseEvent
+			if err := json.Unmarshal(m.Value, &base); err != nil {
+				log.Printf("Error unmarshaling base event: %v", err)
 				continue
 			}
 
-			if err := handler(&event); err != nil {
-				log.Printf("Error handling asset event: %v", err)
-				// Consider implementing retry logic here
-				continue
-			}
+			switch base.EventType {
+			case AssetEventFolderShared, AssetEventFolderUnshared, AssetEventNoteShared, AssetEventNoteUnshared:
+				var shareEvent AssetShareEvent
+				if err := json.Unmarshal(m.Value, &shareEvent); err != nil {
+					log.Printf("Error unmarshaling asset share event: %v", err)
+					continue
+				}
+				if err := shareHandler(&shareEvent); err != nil {
+					log.Printf("Error handling asset share event: %v", err)
+					continue
+				}
+				log.Printf("Processed asset share event: %+v", shareEvent)
 
-			log.Printf("Processed asset event: %s for %s %s", event.EventType, event.AssetType, event.AssetID)
+			default:
+				var event AssetEvent
+				if err := json.Unmarshal(m.Value, &event); err != nil {
+					log.Printf("Error unmarshaling asset event: %v", err)
+					continue
+				}
+				if err := handler(&event); err != nil {
+					log.Printf("Error handling asset event: %v", err)
+					continue
+				}
+				log.Printf("Processed asset event: %+v", event)
+			}
 		}
 	}
 }

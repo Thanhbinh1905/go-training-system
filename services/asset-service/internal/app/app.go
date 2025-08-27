@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Thanhbinh1905/go-training-system/services/asset-service/config"
 	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/client"
+	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/config"
 	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/handler"
 	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/middleware"
 	"github.com/Thanhbinh1905/go-training-system/services/asset-service/internal/repository"
@@ -56,7 +56,7 @@ func Run(cfg *config.Config) {
 	assetRepo := repository.NewCachedAssetRepo(assetDBRepo, assetCacheRepo)
 
 	// Initialize Kafka producer
-	kafkaProducer, err := kafka.NewProducer([]string{"kafka:29092"})
+	kafkaProducer, err := kafka.NewProducer([]string{cfg.KAFKA_BROKER})
 	if err != nil {
 		log.Fatal("failed to create kafka producer", zap.Error(err))
 	}

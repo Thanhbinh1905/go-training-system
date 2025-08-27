@@ -126,6 +126,9 @@ services:
       REDIS_ADDR: redis:6379
       REDIS_PASSWORD: ""
       REDIS_DB: 0
+
+      KAFKA_BROKER: kafka:29092
+
     networks:
       - backend-net
       
@@ -151,6 +154,8 @@ services:
       REDIS_PASSWORD: ""
       REDIS_DB: 0
       USER_SERVICE_GRPC_PORT: user-service:50051
+
+      KAFKA_BROKER: kafka:29092
     networks:
       - backend-net
   asset-service:
