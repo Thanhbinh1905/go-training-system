@@ -113,13 +113,15 @@ tasks:
   kafka-console-consumer:
     desc: Consume messages from a Kafka topic
     cmds:
-      - echo "Usage: task kafka-console-consumer -- topic_name"
+      - |
+        echo "Usage: task kafka-console-consumer -- topic_name"
       - docker exec -it kafka kafka-console-consumer --bootstrap-server kafka:29092 --topic {{.CLI_ARGS | default "team.activity"}} --from-beginning
 
   kafka-console-producer:
     desc: Produce messages to a Kafka topic
     cmds:
-      - echo "Usage: task kafka-console-producer -- topic_name"
+      - |
+        echo "Usage: task kafka-console-producer -- topic_name"
       - docker exec -it kafka kafka-console-producer --bootstrap-server kafka:29092 --topic {{.CLI_ARGS | default "team.activity"}}
 
   kafka-logs:
@@ -127,6 +129,11 @@ tasks:
     cmds:
       - docker logs kafka
 
+  kafka-topic-init: 
+    cmds:
+      - docker exec -it kafka kafka-topics --bootstrap-server kafka:29092 --create --topic team.activity --partitions 1 --replication-factor 1
+      - docker exec -it kafka kafka-topics --bootstrap-server kafka:29092 --create --topic asset.changes --partitions 1 --replication-factor 1
+      
   kafka-reset:
     desc: Reset Kafka topics (delete and recreate)
     cmds:
@@ -139,10 +146,14 @@ tasks:
     desc: Test graceful shutdown by sending SIGTERM to services
     cmds:
       - echo "Testing graceful shutdown..."
-      - echo "Send SIGTERM to user-service: docker kill --signal=SIGTERM user-service"
-      - echo "Send SIGTERM to team-service: docker kill --signal=SIGTERM team-service"
-      - echo "Send SIGTERM to asset-service: docker kill --signal=SIGTERM asset-service"
-      - echo "Check logs: docker logs user-service | tail -20"
+      - |
+        echo "Send SIGTERM to user-service: docker kill --signal=SIGTERM user-service"
+      - |
+        echo "Send SIGTERM to team-service: docker kill --signal=SIGTERM team-service"
+      - |
+        echo "Send SIGTERM to asset-service: docker kill --signal=SIGTERM asset-service"
+      - |
+        echo "Check logs: docker logs user-service | tail -20"
 
   service-logs:
     desc: View service logs
