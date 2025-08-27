@@ -94,7 +94,7 @@ func RunGRPCServer(userService service.UserService, port string) (*grpc.Server, 
 	return grpcServer, lis, nil
 }
 
-func RunHTTPServer(userService service.UserService, log *zap.Logger) (*http.Server, error) {
+func RunHTTPServer(userService service.UserService, log *zap.Logger, dbCheck func() error, grpcCheck func() error) (*http.Server, error) {
 	userHandler := httpHandler.NewUserHandler(userService)
 	gqlHandler := graphqlHandler(userService)
 
@@ -110,7 +110,26 @@ func RunHTTPServer(userService service.UserService, log *zap.Logger) (*http.Serv
 	v1 := r.Group("/api/v1")
 	{
 		v1.GET("/health", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{"status": "ok"})
+			health := gin.H{
+				"status": "up",
+			}
+			if dbCheck != nil {
+				if err := dbCheck(); err != nil {
+					health["db"] = "down"
+					health["db_error"] = err.Error()
+				} else {
+					health["db"] = "up"
+				}
+			}
+			if grpcCheck != nil {
+				if err := grpcCheck(); err != nil {
+					health["grpc"] = "down"
+					health["grpc_error"] = err.Error()
+				} else {
+					health["grpc"] = "up"
+				}
+			}
+			c.JSON(http.StatusOK, health)
 		})
 		v1.POST("/users", userHandler.CreateUserFromFile)
 	}
@@ -135,7 +154,7 @@ func RunHTTPServer(userService service.UserService, log *zap.Logger) (*http.Serv
 
 func Run(cfg *config.Config) {
 	// Init Logger
-	log := logger.InitLogger("logs/user-service.log", "user-service")
+	log := logger.InitLogger("services/user-service/logs/user-service.log", "user-service")
 	defer log.Sync()
 
 	// DB connection
@@ -156,8 +175,26 @@ func Run(cfg *config.Config) {
 		log.Fatal("Failed to start gRPC server", zap.Error(err))
 	}
 
-	// Start HTTP server
-	httpServer, err := RunHTTPServer(userService, log)
+	// Start HTTP server with health checks
+	// DB checker
+	dbCheck := func() error {
+		sqlDB, err := conn.DB()
+		if err != nil {
+			return err
+		}
+		return sqlDB.Ping()
+	}
+	// gRPC self-check by TCP dial
+	grpcCheck := func() error {
+		conn, err := net.DialTimeout("tcp", ":"+cfg.GRPCPort, 2*time.Second)
+		if err != nil {
+			return err
+		}
+		_ = conn.Close()
+		return nil
+	}
+
+	httpServer, err := RunHTTPServer(userService, log, dbCheck, grpcCheck)
 	if err != nil {
 		log.Fatal("Failed to start HTTP server", zap.Error(err))
 	}

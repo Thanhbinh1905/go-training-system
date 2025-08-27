@@ -34,7 +34,7 @@ const (
 )
 
 func Run(cfg *config.Config) {
-	log := logger.InitLogger("logs/asset-service.log", "asset-service")
+	log := logger.InitLogger("services/asset-service/logs/asset-service.log", "asset-service")
 	defer log.Sync()
 
 	conn, err := postgres.Connect(cfg.DatabaseURL, log)
@@ -67,8 +67,22 @@ func Run(cfg *config.Config) {
 
 	assetSvc := service.NewAssetService(assetRepo, *userClient, *teamClient, kafkaProducer)
 
+	// Health checks
+	dbCheck := func() error {
+		sqlDB, err := conn.DB()
+		if err != nil {
+			return err
+		}
+		return sqlDB.Ping()
+	}
+	redisCheck := func() error {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		return redisClient.Client.Ping(ctx).Err()
+	}
+
 	// Start HTTP server
-	httpServer, err := runHTTPServer(assetSvc, *userClient, log)
+	httpServer, err := runHTTPServer(assetSvc, *userClient, log, dbCheck, redisCheck)
 	if err != nil {
 		log.Fatal("Failed to start HTTP server", zap.Error(err))
 	}
@@ -87,7 +101,7 @@ func Run(cfg *config.Config) {
 	gracefulServer.Start()
 }
 
-func runHTTPServer(assetService service.AssetService, userClient client.UserGRPCClient, log *zap.Logger) (*http.Server, error) {
+func runHTTPServer(assetService service.AssetService, userClient client.UserGRPCClient, log *zap.Logger, dbCheck func() error, redisCheck func() error) (*http.Server, error) {
 	r := gin.Default()
 	r.Use(ginzap.Ginzap(log, time.RFC3339, true))
 	r.Use(ginzap.RecoveryWithZap(log, true))
@@ -97,7 +111,24 @@ func runHTTPServer(assetService service.AssetService, userClient client.UserGRPC
 	p.Use(r)
 
 	r.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "ok"})
+		health := gin.H{"status": "up"}
+		if dbCheck != nil {
+			if err := dbCheck(); err != nil {
+				health["db"] = "down"
+				health["db_error"] = err.Error()
+			} else {
+				health["db"] = "up"
+			}
+		}
+		if redisCheck != nil {
+			if err := redisCheck(); err != nil {
+				health["redis"] = "down"
+				health["redis_error"] = err.Error()
+			} else {
+				health["redis"] = "up"
+			}
+		}
+		c.JSON(200, health)
 	})
 
 	assetHandler := handler.NewAssetHandler(assetService)

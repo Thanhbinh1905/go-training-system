@@ -142,7 +142,6 @@ services:
       - redis
     volumes:
       - .:/app
-      - ./services/team-service/logs:/app/logs
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@team-db:5432/team?sslmode=disable
       PRODUCTION: ${PRODUCTION}
@@ -168,7 +167,6 @@ services:
       - redis
     volumes:
       - .:/app
-      - ./services/asset-service/logs:/app/logs
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@asset-db:5432/asset?sslmode=disable
       PRODUCTION: ${PRODUCTION}

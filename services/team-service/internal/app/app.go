@@ -34,7 +34,7 @@ const (
 )
 
 func Run(cfg *config.Config) {
-	log := logger.InitLogger("logs/team-service.log", "team-service")
+	log := logger.InitLogger("services/team-service/logs/team-service.log", "team-service")
 	defer log.Sync()
 
 	conn, err := postgres.Connect(cfg.DatabaseURL, log)
@@ -69,8 +69,25 @@ func Run(cfg *config.Config) {
 		log.Fatal("Failed to start gRPC server", zap.Error(err))
 	}
 
+	// Health checks
+	dbCheck := func() error {
+		sqlDB, err := conn.DB()
+		if err != nil {
+			return err
+		}
+		return sqlDB.Ping()
+	}
+	grpcCheck := func() error {
+		d, err := net.DialTimeout("tcp", ":"+cfg.GRPCPort, 2*time.Second)
+		if err != nil {
+			return err
+		}
+		_ = d.Close()
+		return nil
+	}
+
 	// Start HTTP server
-	httpServer, err := runHTTPServer(teamService, *userClient, log)
+	httpServer, err := runHTTPServer(teamService, *userClient, log, dbCheck, grpcCheck)
 	if err != nil {
 		log.Fatal("Failed to start HTTP server", zap.Error(err))
 	}
@@ -111,7 +128,7 @@ func runGRPCServer(teamService service.TeamService, port string, log *zap.Logger
 	return server, lis, nil
 }
 
-func runHTTPServer(teamService service.TeamService, userClient client.UserGRPCClient, log *zap.Logger) (*http.Server, error) {
+func runHTTPServer(teamService service.TeamService, userClient client.UserGRPCClient, log *zap.Logger, dbCheck func() error, grpcCheck func() error) (*http.Server, error) {
 	r := gin.Default()
 	r.Use(ginzap.Ginzap(log, time.RFC3339, true))
 	r.Use(ginzap.RecoveryWithZap(log, true))
@@ -121,7 +138,24 @@ func runHTTPServer(teamService service.TeamService, userClient client.UserGRPCCl
 	p.Use(r)
 
 	r.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "ok"})
+		health := gin.H{"status": "up"}
+		if dbCheck != nil {
+			if err := dbCheck(); err != nil {
+				health["db"] = "down"
+				health["db_error"] = err.Error()
+			} else {
+				health["db"] = "up"
+			}
+		}
+		if grpcCheck != nil {
+			if err := grpcCheck(); err != nil {
+				health["grpc"] = "down"
+				health["grpc_error"] = err.Error()
+			} else {
+				health["grpc"] = "up"
+			}
+		}
+		c.JSON(200, health)
 	})
 
 	teamHandler := httpHandler.NewTeamHandler(teamService)
