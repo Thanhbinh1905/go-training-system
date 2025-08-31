@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"github.com/Thanhbinh1905/go-training-system/services/team-service/config"
 	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/app"
+	"github.com/Thanhbinh1905/go-training-system/services/team-service/internal/config"
 )
 
 func main() {

@@ -16,3 +16,17 @@ scrape_configs:
         labels:
           job: team-service
           __path__: /var/log/team-service/*.log
+  - job_name: user-service-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: user-service
+          __path__: /var/log/user-service/*.log
+  - job_name: asset-service-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: asset-service
+          __path__: /var/log/asset-service/*.log

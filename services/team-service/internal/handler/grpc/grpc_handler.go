@@ -74,7 +74,7 @@ func (h *teamgRPCHandler) GetMembersByTeamID(ctx context.Context, req *teampb.Ge
 	}, nil
 }
 
-func (h *teamgRPCHandler) GetUsersByTeamID(ctx context.Context, req *teampb.GetUserIDsByTeamIDRequest) (*teampb.GetUserIDsByTeamIDResponse, error) {
+func (h *teamgRPCHandler) GetUserIDsByTeamID(ctx context.Context, req *teampb.GetUserIDsByTeamIDRequest) (*teampb.GetUserIDsByTeamIDResponse, error) {
 	teamID, err := uuid.Parse(req.GetTeamId())
 	if err != nil {
 		return &teampb.GetUserIDsByTeamIDResponse{
@@ -102,5 +102,74 @@ func (h *teamgRPCHandler) GetUsersByTeamID(ctx context.Context, req *teampb.GetU
 		Base:       grpcutil.BaseSuccess("Users retrieved successfully"),
 		ManagerIds: ManagerIDs,
 		MemberIds:  MemberIDs,
+	}, nil
+}
+
+func (h *teamgRPCHandler) IsUserTeamManager(ctx context.Context, req *teampb.IsUserTeamManagerRequest) (*teampb.IsUserTeamManagerResponse, error) {
+	// Parse teamID
+	teamID, err := uuid.Parse(req.GetTeamID())
+	if err != nil {
+		return &teampb.IsUserTeamManagerResponse{
+			Base: grpcutil.BaseError("Invalid team ID"),
+		}, status.Errorf(codes.InvalidArgument, "invalid team ID: %v", err)
+	}
+
+	// Parse userID
+	userID, err := uuid.Parse(req.GetUserID())
+	if err != nil {
+		return &teampb.IsUserTeamManagerResponse{
+			Base: grpcutil.BaseError("Invalid user ID"),
+		}, status.Errorf(codes.InvalidArgument, "invalid user ID: %v", err)
+	}
+
+	// Chek is user manager
+	isManager, err := h.teamService.IsUserTeamManager(ctx, userID, teamID)
+	if err != nil {
+		return &teampb.IsUserTeamManagerResponse{
+			Base: grpcutil.BaseError("Internal server error"),
+		}, status.Errorf(codes.Internal, "failed to check manager: %v", err)
+	}
+
+	if !isManager {
+		return &teampb.IsUserTeamManagerResponse{
+			Base:      grpcutil.BaseSuccess("User is not a manager"),
+			IsManager: false,
+		}, nil
+	}
+
+	return &teampb.IsUserTeamManagerResponse{
+		Base:      grpcutil.BaseSuccess("User is a manager"),
+		IsManager: true,
+	}, nil
+}
+
+func (h *teamgRPCHandler) IsTeamExist(ctx context.Context, req *teampb.GetTeamRequest) (*teampb.IsTeamExistResponse, error) {
+	// Parse teamID
+	teamID, err := uuid.Parse(req.GetTeamId())
+	if err != nil {
+		return &teampb.IsTeamExistResponse{
+			Base:    grpcutil.BaseError("Invalid team ID"),
+			IsExist: false,
+		}, status.Errorf(codes.InvalidArgument, "invalid team ID: %v", err)
+	}
+
+	exist, err := h.teamService.IsTeamExist(ctx, teamID)
+	if err != nil {
+		return &teampb.IsTeamExistResponse{
+			Base:    grpcutil.BaseError("Internal server error"),
+			IsExist: false,
+		}, nil
+	}
+
+	if !exist {
+		return &teampb.IsTeamExistResponse{
+			Base:    grpcutil.BaseSuccess("Team is not found"),
+			IsExist: false,
+		}, nil
+	}
+
+	return &teampb.IsTeamExistResponse{
+		Base:    grpcutil.BaseSuccess("TeamID is valid"),
+		IsExist: true,
 	}, nil
 }

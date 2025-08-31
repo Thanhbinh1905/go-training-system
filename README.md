@@ -1,151 +1,217 @@
-# SETA Golang Training
+# SETA Golang Training - Microservices System
 
-🏗 **Training Project:** Microservices for User, Team & Asset Management
+## Overview
 
-This repository is part of the SETA Golang training series. It demonstrates how to build a microservices-based system using Go, focusing on user management, team collaboration, and asset sharing.
+A production-style microservices system in Go for managing Users, Teams, and Assets (folders/notes). It demonstrates:
+- Clean service boundaries (User, Team, Asset)
+- PostgreSQL + GORM for persistence
+- Redis for caching and real-time ACL lookup
+- gRPC between services + GraphQL (User) + REST (Team/Asset)
+- Kafka for domain events (team/activity, asset/changes)
+- Observability with Prometheus + Grafana + Loki + Promtail
+- Graceful shutdown
 
----
+## Services
 
-## 📚 Overview
+- User Service (GraphQL + REST)
+  - Auth, JWT issuance/verification, user profile and roles (MANAGER/MEMBER)
+  - Exposes gRPC API for token verification and user lookups
+  - Port: 8081 (HTTP), 50051 (gRPC)
 
-This system is split into three main services with clear domain boundaries:
+- Team Service (REST + gRPC)
+  - Create team, add/remove managers and members
+  - Consumes User gRPC to validate users
+  - Emits Kafka events for team changes
+  - Port: 8082 (HTTP), 50052 (gRPC)
 
-1. **User Service (GraphQL)** – manages users, roles, authentication  
-2. **Team Service (REST)** – manages teams, members, and managers  
-3. **Asset Service (REST)** – manages folders, notes, and sharing between users  
+- Asset Service (REST)
+  - Create/Update/Delete folders and notes
+  - Share/Unshare folders/notes with access levels (read/write)
+  - Real-time ACL cache in Redis: asset:{assetId}:acl → { userId: accessType }
+  - Validates permissions from Redis before DB fallbacks
+  - Emits Kafka events for asset changes
+  - Port: 8083 (HTTP)
 
----
-
-## 🔧 Architecture
+## Architecture
 
 ```text
-             ┌────────────┐
-             │  Client    │
-             └────┬───────┘
-                  │
-    ┌─────────────┼──────────────┐
-    │             │              │
-┌───▼────────┐ ┌───▼────────┐ ┌───▼────────────┐
-│ User Svc   │ │ Team Svc   │ │ Asset Svc      │
-│ (GraphQL)  │ │ (REST API) │ │ (REST API)     │
-└────────────┘ └────────────┘ └────────────────┘
-````
+Client ──► (GraphQL/REST)
+   ├─► user-service (GraphQL + gRPC)
+   ├─► team-service (REST + gRPC)
+   └─► asset-service (REST)
 
----
+user-service ◄── gRPC ──► team-service
+asset-service ◄── gRPC ──► user-service, team-service
 
-## 🧩 Microservices Breakdown
+Kafka: team.activity, asset.changes
+Redis: caching, real-time ACL
+PostgreSQL: per-service DB
+Prometheus/Grafana + Loki/Promtail: metrics/logs
+```
 
-### 1. 🧑‍💼 **User Service (GraphQL)**
+## Tech Stack
 
-> Handles user creation, login, logout, and role management.
+- Go 1.24, Gin, gqlgen, gRPC, GORM
+- PostgreSQL (per-service DB): user, team, asset
+- Redis (caching + ACL): redis:7.2
+- Kafka (segmentio/kafka-go) + Zookeeper
+- Prometheus, Grafana, Loki, Promtail
+- Go workspaces (go.work)
 
-* **Stack:** Go, gqlgen, JWT, PostgreSQL
-* **Endpoints:**
+## Kafka Integration
 
-  * `createUser(username, email, role)`
-  * `login(email, password)`
-  * `logout`
-  * `fetchUsers`
-* **Roles:**
+- Topics
+  - `team.activity`: TEAM_CREATED, MEMBER_ADDED, MEMBER_REMOVED, MANAGER_ADDED, MANAGER_REMOVED
+  - `asset.changes`: FOLDER_CREATED/UPDATED/DELETED, NOTE_CREATED/UPDATED/DELETED, FOLDER_SHARED/UNSHARED, NOTE_SHARED/UNSHARED
 
-  * `manager`: can create/manage teams
-  * `member`: can only be added to teams
+- Producers
+  - Team Service publishes team activity events
+  - Asset Service publishes asset change and share/unshare events
 
----
+- Shared package `shared/kafka`
+  - `events.go`: event types and payloads
+  - `producer.go`: publish helpers (team, asset, asset share)
+  - `consumer.go` + `consumer_service.go`: consuming patterns and sample handlers
 
-### 2. 👥 **Team Service (REST)**
+See `KAFKA_INTEGRATION.md` for details and Taskfile commands.
 
-> RESTful service for team creation and member management.
+## Real-Time ACL (Redis)
 
-* **Stack:** Go, Gin, PostgreSQL
-* **Features:**
+- Key format: `asset:{assetId}:acl` (Redis Hash)
+  - Field: `userId`
+  - Value: `read` or `write`
 
-  * Create a team
-  * Add/remove members
-  * Add/remove other managers (only by main manager)
-* **Entities:**
+- Updated on share/unshare
+  - On ShareFolder/ShareNote: set multiple user access in the hash
+  - On RevokeFolderShare/RevokeNoteShare: remove user’s field from the hash
 
-  * `teamId`, `teamName`
-  * `managers[]`, `members[]`
+- Permission validation flow
+  - First check Redis ACL
+  - If not found, fallback to DB checks (NoteShare/FolderShare and owner logic)
 
----
+Relevant code:
+- `services/asset-service/internal/repository/asset_cache.go` (ACL helpers)
+- `services/asset-service/internal/repository/asset_repository.go` (write-through cache on share/unshare)
+- `services/asset-service/internal/service/asset_service.go` (permission checks prioritize Redis)
 
-### 3. 🗂 **Asset Service (REST)**
+## Graceful Shutdown
 
-> Folder and note management with access control and sharing.
+- Shared utilities in `shared/graceful`
+- Each service starts HTTP/gRPC servers in goroutines and listens for SIGINT/SIGTERM
+- Shutdown completes in a bounded timeout (configurable per service)
 
-* **Entities:**
+See `GRACEFUL_SHUTDOWN.md` for usage.
 
-  * **Folders** – owned by users, contain notes
-  * **Notes** – belong to folders, have content
-* **Permissions:**
-
-  * Share folders/notes (read or write)
-  * Revoke access at any time
-  * Shared folder = all notes inside are also shared
-  * Managers can view assets from team members (read-only)
-
----
-
-## 🛠️ Project Structure
+## Project Structure
 
 ```text
 .
 ├── services/
-│   ├── user-service/    # GraphQL-based auth & user logic
-│   ├── team-service/    # RESTful team management
-│   └── asset-service/   # RESTful asset sharing
-├── migration/           # DB migration logic and models
-├── shared/              # Shared packages: logger, db, error handling
-├── docker-compose.yml   # Multi-service orchestration
-├── promtail-config.yml  # Log shipping config
-├── Taskfile.yaml        # Task runner for development
-└── token.json           # JWT or token storage
+│   ├── user-service/
+│   │   ├── cmd/                     # entrypoint(s)
+│   │   ├── internal/                # app, handler (graph/http/grpc), service, repo, model
+│   │   ├── pb/                      # generated from shared/proto
+│   │   ├── config/
+│   │   └── Dockerfile
+│   ├── team-service/
+│   │   ├── internal/                # gRPC + REST handlers, service, repo, middleware
+│   │   ├── pb/
+│   │   ├── config/
+│   │   └── Dockerfile
+│   └── asset-service/
+│       ├── internal/                # REST handlers, service, repo (DB+cache), model
+│       ├── pb/
+│       ├── config/
+│       └── Dockerfile
+├── shared/
+│   ├── proto/                       # user, team protobufs
+│   ├── kafka/                       # events, producer, consumer
+│   ├── db/ (postgres, redis)
+│   ├── logger/
+│   ├── graceful/
+│   └── errors, apperror, contextkey, httpresponse
+├── migration/                       # GORM migrations for all DBs
+├── docker-compose.yml               # services + infra
+├── Taskfile.yaml                    # dev helpers
+├── KAFKA_INTEGRATION.md
+└── GRACEFUL_SHUTDOWN.md
 ```
 
----
+## Run with Docker
 
-## 🐳 Run with Docker
+Requirements: Docker, docker-compose. Set environment variables (see docker-compose references):
+- POSTGRES_USER, POSTGRES_PASSWORD
+- JWT_SECRET
+- PRODUCTION (true/false)
 
+Start infra + services:
 ```bash
-docker-compose up --build
+docker-compose up -d --build
 ```
+Services:
+- user-service: http://localhost:8081, gRPC 50051
+- team-service: http://localhost:8082, gRPC 50052
+- asset-service: http://localhost:8083
+- Kafka: localhost:9092
+- Grafana: http://localhost:3000
+- Prometheus: http://localhost:9090
+- Loki: http://localhost:3100
 
-> 📦 Ensure you’ve set up `.env` files for each service if needed.
+## Development
 
----
-
-## 🚀 Development
-
-Use [`Taskfile`](https://taskfile.dev) to simplify common operations:
-
+Using Taskfile:
 ```bash
-task migrate       # Run DB migrations
-task user          # Start user-service
-task team          # Start team-service
+# Protobuf codegen
+task proto:user
+task proto:team
+task proto:asset
+
+# gqlgen (user-service GraphQL)
+task user:gqlgen
+
+# DB shells (inside Docker)
+task pqsl:user
+task pqsl:team
+task pqsl:asset
+
+# Redis shell
+task redis-cli
+
+# Kafka helper commands
+task kafka-topics
+task kafka-console-consumer -- team.activity
+task kafka-console-consumer -- asset.changes
+task kafka-console-producer -- team.activity
 ```
 
----
+Run locally with Air (hot reload) using service Dockerfiles/volumes or your preferred method.
 
-## 📈 Logging & Monitoring
+## API Highlights
 
-Integrated with **Promtail + Loki + Grafana**:
+- User Service (GraphQL + REST)
+  - GraphQL endpoint: `/graphql` (+ Playground on `/`)
+  - REST: `/api/v1/health`, `/api/v1/users` (import from file)
 
-* `promtail-config.yml` configures log scraping
-* Logs go to Loki and can be queried via Grafana dashboard
+- Team Service (REST + gRPC)
+  - REST (manager-protected): `/api/v1/teams/...`
+  - gRPC: team definitions in `shared/proto/team/team.proto`
 
----
+- Asset Service (REST)
+  - REST: `/api/v1/assets/...`
+  - Real-time ACL checked from Redis before DB
 
-## ✨ Contribution Guide
+## Observability
 
-* Keep each service isolated and reusable
-* Use gRPC or REST depending on service role
-* Favor clear error handling with `shared/apperror`
-* Use consistent logging (`shared/logger`)
+- Logs: Promtail ships logs from service volumes to Loki
+- Metrics: Prometheus scrapes; Grafana dashboards available (login from env)
 
----
+## Notes
 
-## 📄 License
+- This repo uses Go workspaces (`go.work`) to develop shared modules alongside services.
+- Kafka producers/consumers use segmentio/kafka-go.
+- ACL cache is the first line of authorization checks; DB is the source of truth.
+
+## License
 
 MIT – Free to learn, use, and modify.
 

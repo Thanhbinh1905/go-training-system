@@ -24,6 +24,7 @@ const (
 	TeamService_GetUserIDsByTeamID_FullMethodName  = "/team.TeamService/GetUserIDsByTeamID"
 	TeamService_GetManagersByTeamID_FullMethodName = "/team.TeamService/GetManagersByTeamID"
 	TeamService_GetMembersByTeamID_FullMethodName  = "/team.TeamService/GetMembersByTeamID"
+	TeamService_IsUserTeamManager_FullMethodName   = "/team.TeamService/IsUserTeamManager"
 )
 
 // TeamServiceClient is the client API for TeamService service.
@@ -37,6 +38,7 @@ type TeamServiceClient interface {
 	// (Tuỳ chọn) Tách riêng member/manager nếu cần
 	GetManagersByTeamID(ctx context.Context, in *GetUserIDsByTeamIDRequest, opts ...grpc.CallOption) (*GetManagersByTeamIDResponse, error)
 	GetMembersByTeamID(ctx context.Context, in *GetUserIDsByTeamIDRequest, opts ...grpc.CallOption) (*GetMembersByTeamIDResponse, error)
+	IsUserTeamManager(ctx context.Context, in *IsUserTeamManagerRequest, opts ...grpc.CallOption) (*IsUserTeamManagerResponse, error)
 }
 
 type teamServiceClient struct {
@@ -97,6 +99,16 @@ func (c *teamServiceClient) GetMembersByTeamID(ctx context.Context, in *GetUserI
 	return out, nil
 }
 
+func (c *teamServiceClient) IsUserTeamManager(ctx context.Context, in *IsUserTeamManagerRequest, opts ...grpc.CallOption) (*IsUserTeamManagerResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IsUserTeamManagerResponse)
+	err := c.cc.Invoke(ctx, TeamService_IsUserTeamManager_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TeamServiceServer is the server API for TeamService service.
 // All implementations must embed UnimplementedTeamServiceServer
 // for forward compatibility.
@@ -108,6 +120,7 @@ type TeamServiceServer interface {
 	// (Tuỳ chọn) Tách riêng member/manager nếu cần
 	GetManagersByTeamID(context.Context, *GetUserIDsByTeamIDRequest) (*GetManagersByTeamIDResponse, error)
 	GetMembersByTeamID(context.Context, *GetUserIDsByTeamIDRequest) (*GetMembersByTeamIDResponse, error)
+	IsUserTeamManager(context.Context, *IsUserTeamManagerRequest) (*IsUserTeamManagerResponse, error)
 	mustEmbedUnimplementedTeamServiceServer()
 }
 
@@ -132,6 +145,9 @@ func (UnimplementedTeamServiceServer) GetManagersByTeamID(context.Context, *GetU
 }
 func (UnimplementedTeamServiceServer) GetMembersByTeamID(context.Context, *GetUserIDsByTeamIDRequest) (*GetMembersByTeamIDResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMembersByTeamID not implemented")
+}
+func (UnimplementedTeamServiceServer) IsUserTeamManager(context.Context, *IsUserTeamManagerRequest) (*IsUserTeamManagerResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method IsUserTeamManager not implemented")
 }
 func (UnimplementedTeamServiceServer) mustEmbedUnimplementedTeamServiceServer() {}
 func (UnimplementedTeamServiceServer) testEmbeddedByValue()                     {}
@@ -244,6 +260,24 @@ func _TeamService_GetMembersByTeamID_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TeamService_IsUserTeamManager_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IsUserTeamManagerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TeamServiceServer).IsUserTeamManager(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TeamService_IsUserTeamManager_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TeamServiceServer).IsUserTeamManager(ctx, req.(*IsUserTeamManagerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TeamService_ServiceDesc is the grpc.ServiceDesc for TeamService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -270,6 +304,10 @@ var TeamService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetMembersByTeamID",
 			Handler:    _TeamService_GetMembersByTeamID_Handler,
+		},
+		{
+			MethodName: "IsUserTeamManager",
+			Handler:    _TeamService_IsUserTeamManager_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

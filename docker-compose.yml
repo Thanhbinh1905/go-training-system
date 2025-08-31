@@ -1,6 +1,53 @@
 
 services:
   # ================= DATABASES =================
+  redis:
+    image: redis:7.2
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    networks:
+      - backend-net
+
+  # ================= KAFKA =================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - backend-net
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "9101:9101"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_DELETE_TOPIC_ENABLE: 'true'
+    networks:
+      - backend-net
+
   user-db:
     image: postgres:13.21-alpine3.21
     container_name: user-db
@@ -40,6 +87,7 @@ services:
       - backend-net
     volumes:
       - asset-data:/var/lib/postgresql/data
+      
   # ================= SERVICES =================
   migrate:
     build:
@@ -66,6 +114,7 @@ services:
       - "8081:8080"
     depends_on:
       - user-db
+      - redis
     volumes:
       - .:/app
     environment:
@@ -73,6 +122,13 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       PRODUCTION: ${PRODUCTION}
       GRPC_PORT: 50051
+
+      REDIS_ADDR: redis:6379
+      REDIS_PASSWORD: ""
+      REDIS_DB: 0
+
+      KAFKA_BROKER: kafka:29092
+
     networks:
       - backend-net
       
@@ -86,13 +142,20 @@ services:
     depends_on:
       - team-db
       - user-service
+      - redis
     volumes:
       - .:/app
-      - ./services/team-service/logs:/app/logs
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@team-db:5432/team?sslmode=disable
       PRODUCTION: ${PRODUCTION}
       GRPC_PORT: 50052
+
+      REDIS_ADDR: redis:6379
+      REDIS_PASSWORD: ""
+      REDIS_DB: 0
+      USER_SERVICE_GRPC_PORT: user-service:50051
+
+      KAFKA_BROKER: kafka:29092
     networks:
       - backend-net
   asset-service:
@@ -101,17 +164,23 @@ services:
       dockerfile: services/asset-service/Dockerfile
     container_name: asset-service
     ports:
-      - "8082:8080"
+      - "8083:8080"
     depends_on:
       - asset-db
       - user-service
+      - team-service
+      - redis
     volumes:
       - .:/app
-      - ./services/asset-service/logs:/app/logs
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@asset-db:5432/asset?sslmode=disable
       PRODUCTION: ${PRODUCTION}
-      GRPC_PORT: 50052
+
+      REDIS_ADDR: redis:6379
+      REDIS_PASSWORD: ""
+      REDIS_DB: 0
+      USER_SERVICE_GRPC_PORT: user-service:50051
+      TEAM_SERVICE_GRPC_PORT: team-service:50052
     networks:
       - backend-net
   # ================= MONITORING =================
@@ -129,6 +198,9 @@ services:
     container_name: promtail
     volumes:
       - ./services/team-service/logs:/var/log/team-service
+      - ./services/asset-service/logs:/var/log/asset-service
+      - ./services/user-service/logs:/var/log/user-service
+
       - ./promtail-config.yml:/etc/promtail/promtail-config.yml
     command: -config.file=/etc/promtail/promtail-config.yml
     depends_on:
@@ -171,6 +243,7 @@ volumes:
   user-data:
   team-data:
   asset-data:
+  redis-data:
 
 networks:
   backend-net:

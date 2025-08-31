@@ -1,3 +1,25 @@
 logs/
 *.log
 token.json
+**/tmp/
+
+
+# binaries
+services/*/*-service
+services/*/tmp/
+services/*/logs/*
+logs/
+tmp/
+
+# Go build
+bin/
+dist/
+coverage.out
+
+# Editor/OS
+.vscode/
+.idea/
+.DS_Store
+
+GRACEFUL_SHUTDOWN.md
+KAFKA_INTEGRATION.md

@@ -489,6 +489,110 @@ func (x *GetMembersByTeamIDResponse) GetMemberIds() []string {
 	return nil
 }
 
+type IsUserTeamManagerRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserID        string                 `protobuf:"bytes,1,opt,name=userID,proto3" json:"userID,omitempty"`
+	TeamID        string                 `protobuf:"bytes,2,opt,name=teamID,proto3" json:"teamID,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IsUserTeamManagerRequest) Reset() {
+	*x = IsUserTeamManagerRequest{}
+	mi := &file_team_team_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IsUserTeamManagerRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IsUserTeamManagerRequest) ProtoMessage() {}
+
+func (x *IsUserTeamManagerRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_team_team_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IsUserTeamManagerRequest.ProtoReflect.Descriptor instead.
+func (*IsUserTeamManagerRequest) Descriptor() ([]byte, []int) {
+	return file_team_team_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *IsUserTeamManagerRequest) GetUserID() string {
+	if x != nil {
+		return x.UserID
+	}
+	return ""
+}
+
+func (x *IsUserTeamManagerRequest) GetTeamID() string {
+	if x != nil {
+		return x.TeamID
+	}
+	return ""
+}
+
+type IsUserTeamManagerResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Base          *BaseResponse          `protobuf:"bytes,1,opt,name=base,proto3" json:"base,omitempty"`
+	IsManager     bool                   `protobuf:"varint,2,opt,name=isManager,proto3" json:"isManager,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IsUserTeamManagerResponse) Reset() {
+	*x = IsUserTeamManagerResponse{}
+	mi := &file_team_team_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IsUserTeamManagerResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IsUserTeamManagerResponse) ProtoMessage() {}
+
+func (x *IsUserTeamManagerResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_team_team_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IsUserTeamManagerResponse.ProtoReflect.Descriptor instead.
+func (*IsUserTeamManagerResponse) Descriptor() ([]byte, []int) {
+	return file_team_team_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *IsUserTeamManagerResponse) GetBase() *BaseResponse {
+	if x != nil {
+		return x.Base
+	}
+	return nil
+}
+
+func (x *IsUserTeamManagerResponse) GetIsManager() bool {
+	if x != nil {
+		return x.IsManager
+	}
+	return false
+}
+
 var File_team_team_proto protoreflect.FileDescriptor
 
 const file_team_team_proto_rawDesc = "" +
@@ -526,13 +630,20 @@ const file_team_team_proto_rawDesc = "" +
 	"\x1aGetMembersByTeamIDResponse\x12&\n" +
 	"\x04base\x18\x01 \x01(\v2\x12.team.BaseResponseR\x04base\x12\x1d\n" +
 	"\n" +
-	"member_ids\x18\x02 \x03(\tR\tmemberIds2\x92\x03\n" +
+	"member_ids\x18\x02 \x03(\tR\tmemberIds\"J\n" +
+	"\x18IsUserTeamManagerRequest\x12\x16\n" +
+	"\x06userID\x18\x01 \x01(\tR\x06userID\x12\x16\n" +
+	"\x06teamID\x18\x02 \x01(\tR\x06teamID\"a\n" +
+	"\x19IsUserTeamManagerResponse\x12&\n" +
+	"\x04base\x18\x01 \x01(\v2\x12.team.BaseResponseR\x04base\x12\x1c\n" +
+	"\tisManager\x18\x02 \x01(\bR\tisManager2\xe8\x03\n" +
 	"\vTeamService\x126\n" +
 	"\aGetTeam\x12\x14.team.GetTeamRequest\x1a\x15.team.GetTeamResponse\x12>\n" +
 	"\vIsTeamExist\x12\x14.team.GetTeamRequest\x1a\x19.team.IsTeamExistResponse\x12W\n" +
 	"\x12GetUserIDsByTeamID\x12\x1f.team.GetUserIDsByTeamIDRequest\x1a .team.GetUserIDsByTeamIDResponse\x12Y\n" +
 	"\x13GetManagersByTeamID\x12\x1f.team.GetUserIDsByTeamIDRequest\x1a!.team.GetManagersByTeamIDResponse\x12W\n" +
-	"\x12GetMembersByTeamID\x12\x1f.team.GetUserIDsByTeamIDRequest\x1a .team.GetMembersByTeamIDResponseBKZIgithub.com/Thanhbinh1905/go-training-system/services/team-service/pb/teamb\x06proto3"
+	"\x12GetMembersByTeamID\x12\x1f.team.GetUserIDsByTeamIDRequest\x1a .team.GetMembersByTeamIDResponse\x12T\n" +
+	"\x11IsUserTeamManager\x12\x1e.team.IsUserTeamManagerRequest\x1a\x1f.team.IsUserTeamManagerResponseBKZIgithub.com/Thanhbinh1905/go-training-system/services/team-service/pb/teamb\x06proto3"
 
 var (
 	file_team_team_proto_rawDescOnce sync.Once
@@ -546,7 +657,7 @@ func file_team_team_proto_rawDescGZIP() []byte {
 	return file_team_team_proto_rawDescData
 }
 
-var file_team_team_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_team_team_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_team_team_proto_goTypes = []any{
 	(*BaseResponse)(nil),                // 0: team.BaseResponse
 	(*GetTeamRequest)(nil),              // 1: team.GetTeamRequest
@@ -557,6 +668,8 @@ var file_team_team_proto_goTypes = []any{
 	(*GetUserIDsByTeamIDResponse)(nil),  // 6: team.GetUserIDsByTeamIDResponse
 	(*GetManagersByTeamIDResponse)(nil), // 7: team.GetManagersByTeamIDResponse
 	(*GetMembersByTeamIDResponse)(nil),  // 8: team.GetMembersByTeamIDResponse
+	(*IsUserTeamManagerRequest)(nil),    // 9: team.IsUserTeamManagerRequest
+	(*IsUserTeamManagerResponse)(nil),   // 10: team.IsUserTeamManagerResponse
 }
 var file_team_team_proto_depIdxs = []int32{
 	0,  // 0: team.GetTeamResponse.base:type_name -> team.BaseResponse
@@ -565,21 +678,24 @@ var file_team_team_proto_depIdxs = []int32{
 	0,  // 3: team.GetUserIDsByTeamIDResponse.base:type_name -> team.BaseResponse
 	0,  // 4: team.GetManagersByTeamIDResponse.base:type_name -> team.BaseResponse
 	0,  // 5: team.GetMembersByTeamIDResponse.base:type_name -> team.BaseResponse
-	1,  // 6: team.TeamService.GetTeam:input_type -> team.GetTeamRequest
-	1,  // 7: team.TeamService.IsTeamExist:input_type -> team.GetTeamRequest
-	5,  // 8: team.TeamService.GetUserIDsByTeamID:input_type -> team.GetUserIDsByTeamIDRequest
-	5,  // 9: team.TeamService.GetManagersByTeamID:input_type -> team.GetUserIDsByTeamIDRequest
-	5,  // 10: team.TeamService.GetMembersByTeamID:input_type -> team.GetUserIDsByTeamIDRequest
-	3,  // 11: team.TeamService.GetTeam:output_type -> team.GetTeamResponse
-	4,  // 12: team.TeamService.IsTeamExist:output_type -> team.IsTeamExistResponse
-	6,  // 13: team.TeamService.GetUserIDsByTeamID:output_type -> team.GetUserIDsByTeamIDResponse
-	7,  // 14: team.TeamService.GetManagersByTeamID:output_type -> team.GetManagersByTeamIDResponse
-	8,  // 15: team.TeamService.GetMembersByTeamID:output_type -> team.GetMembersByTeamIDResponse
-	11, // [11:16] is the sub-list for method output_type
-	6,  // [6:11] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	0,  // 6: team.IsUserTeamManagerResponse.base:type_name -> team.BaseResponse
+	1,  // 7: team.TeamService.GetTeam:input_type -> team.GetTeamRequest
+	1,  // 8: team.TeamService.IsTeamExist:input_type -> team.GetTeamRequest
+	5,  // 9: team.TeamService.GetUserIDsByTeamID:input_type -> team.GetUserIDsByTeamIDRequest
+	5,  // 10: team.TeamService.GetManagersByTeamID:input_type -> team.GetUserIDsByTeamIDRequest
+	5,  // 11: team.TeamService.GetMembersByTeamID:input_type -> team.GetUserIDsByTeamIDRequest
+	9,  // 12: team.TeamService.IsUserTeamManager:input_type -> team.IsUserTeamManagerRequest
+	3,  // 13: team.TeamService.GetTeam:output_type -> team.GetTeamResponse
+	4,  // 14: team.TeamService.IsTeamExist:output_type -> team.IsTeamExistResponse
+	6,  // 15: team.TeamService.GetUserIDsByTeamID:output_type -> team.GetUserIDsByTeamIDResponse
+	7,  // 16: team.TeamService.GetManagersByTeamID:output_type -> team.GetManagersByTeamIDResponse
+	8,  // 17: team.TeamService.GetMembersByTeamID:output_type -> team.GetMembersByTeamIDResponse
+	10, // 18: team.TeamService.IsUserTeamManager:output_type -> team.IsUserTeamManagerResponse
+	13, // [13:19] is the sub-list for method output_type
+	7,  // [7:13] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_team_team_proto_init() }
@@ -593,7 +709,7 @@ func file_team_team_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_team_team_proto_rawDesc), len(file_team_team_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

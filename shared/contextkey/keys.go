@@ -2,8 +2,8 @@ package contextkey
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/Thanhbinh1905/go-training-system/shared/errors"
 	"github.com/google/uuid"
 )
 
@@ -21,12 +21,12 @@ func GetUserIDFromContext(ctx context.Context) (uuid.UUID, error) {
 	if userIDStr, ok := ctx.Value(userIDKey).(string); ok && userIDStr != "" {
 		return uuid.Parse(userIDStr)
 	}
-	return uuid.Nil, fmt.Errorf("userID not found in context")
+	return uuid.Nil, errors.ErrUnauthorized
 }
 
 func GetUserRoleFromContext(ctx context.Context) (string, error) {
 	if roleStr, ok := ctx.Value(userRoleKey).(string); ok && roleStr != "" {
 		return roleStr, nil
 	}
-	return "", fmt.Errorf("user role not found in context")
+	return "", errors.ErrUnauthorized
 }
